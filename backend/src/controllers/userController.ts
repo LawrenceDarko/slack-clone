@@ -8,14 +8,18 @@ dotevn.config()
 
 
 // const jwtSecret = generateRandomJWTSecret(20)
-const jwtSecret = process.env.ACCESS_TOKEN_SECRET;
+const jwtSecret = process.env.ACCESS_TOKEN_SECRET as string;
+const jwtRefreshToken = process.env.REFRESH_TOKEN_SECRET as string
 
-const generateToken = (userId: any) => {
-    if (!jwtSecret) {
-        throw new Error('JWT_SECRET is not set in the environment variables.');
-    }
+export const generateToken = (userId: any) => {
     return jwt.sign({userId}, jwtSecret, {
-        expiresIn: '30d'
+        expiresIn: '7d'
+    })
+}
+
+export const generateRefreshToken = (userId: any) => {
+    return jwt.sign({userId}, jwtRefreshToken, {
+        expiresIn: '20d'
     })
 }
 
@@ -35,14 +39,18 @@ const registerUser = async(req: Request, res: Response) => {
     // Hash Password
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
+    
     try {
         const newUser = await User.create({username, email, password: hashedPassword})
         const savedUser = await newUser.save();
+        const access_token = generateToken(savedUser._id)
+        const refresh_token = generateRefreshToken(savedUser._id)
         res.status(201).json({
             id: savedUser._id,
             username: savedUser.username,
             email: savedUser.email,
-            token: generateToken(savedUser._id)
+            accessToken: access_token,
+            refreshToken: refresh_token
         });
     } catch (error) {
         res.status(400).json(error);
@@ -69,11 +77,34 @@ const loginUser = async (req: Request, res: Response) => {
 
         // If user exists decrypt their password and if the entered password is equal to the decrypted one
         if (user && user.password && (await bcrypt.compare(password, user.password))) {
+            const access_token = generateToken(user._id)
+            const refresh_token = generateRefreshToken(user._id)
+
+
+            let cookieInfo = {
+                refreshToken: refresh_token,
+                userData: {
+                    id: user._id,
+                    username: user.username,
+                    email: user.email
+                    // Add more user data fields if needed
+                }
+            }
+
+
+            res.cookie("token", refresh_token, {
+                httpOnly: true
+            })
+
             return res.status(200).json({
-                id: user._id,
-                username: user.username,
-                email: user.email,
-                token: generateToken(user._id)
+                status: 'success',
+                data: {
+                    id: user._id,
+                    username: user.username,
+                    email: user.email,
+                    accessToken: access_token,
+                    refreshToken: refresh_token
+                }
             });
         } else {
             return res.status(401).json("Invalid credentials");
@@ -87,6 +118,7 @@ const loginUser = async (req: Request, res: Response) => {
 
 
 const getAllUsers = async(req: Request, res: Response) => { 
+    // const id = req.user.userId
     const allUsers = await User.find({})
     try {
         res.status(200).json(allUsers)

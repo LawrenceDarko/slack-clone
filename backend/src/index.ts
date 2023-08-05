@@ -7,7 +7,9 @@ import userRoutes from './routes/userRoutes';
 import workspaceRoutes from './routes/workspaceRoutes';
 import channelRoutes from './routes/channelRoutes';
 import directChatRoutes from './routes/directChatRoutes';
+import tokenRoutes from './routes/tokenRoutes';
 import cors from 'cors'
+import cookieParser from 'cookie-parser';
 // import { protect } from './middleware/authMiddleware';
 import protect from './middleware/authMiddleware';
 import dotenv from 'dotenv';
@@ -24,11 +26,13 @@ app.use(cors({
 
 // middlewares
 app.use(express.json());
+app.use(cookieParser());
 
 app.use('/api/users', userRoutes)
 app.use('/api/workspace', protect, workspaceRoutes)
 app.use('/api/channels', protect, channelRoutes)
 app.use('/api/direct-chat', protect, directChatRoutes)
+app.use('/refresh', tokenRoutes)
 
 // connect to db
 mongoose.connect(process.env.MONGO_URI).then(()=>{

@@ -14,6 +14,12 @@ const createWorkspace = async(req: Request, res: Response) => {
 
 const createUserWorkspace = async(req: Request, res: Response) => {
     const { user, workspace } = req.body
+    const existingUser = await UserWorkspace.findOne({user, workspace})
+
+    if(existingUser){
+        return res.status(403).json("User already exist")
+    }
+
     const newUserWorkspace = await UserWorkspace.create({user, workspace})
     try {
         const savedUserWorkspace = await newUserWorkspace.save()
@@ -24,8 +30,8 @@ const createUserWorkspace = async(req: Request, res: Response) => {
 }
 
 const fetchAllWorkspaceForAUser = async(req: Request, res: Response) => {
-    const {user} = req.body;
-    const allUserWorkspace = await UserWorkspace.find({user}).populate('workspace').exec()
+    const {userId} = req.params;
+    const allUserWorkspace = await UserWorkspace.find({user: userId}).populate('workspace').exec()
     try {
         res.status(200).json(allUserWorkspace)
     } catch (error) {
@@ -34,8 +40,9 @@ const fetchAllWorkspaceForAUser = async(req: Request, res: Response) => {
 }
 
 const fetchAllUsersForAWorkspace = async(req: Request, res: Response) => {
-    const {workspace} = req.body;
-    const allWorkspaceUsers = await UserWorkspace.find({workspace}).populate('user').exec()
+    const {workspaceId} = req.params;
+    
+    const allWorkspaceUsers = await UserWorkspace.find({workspace: workspaceId}).populate('user').exec()
     try {
         res.status(200).json(allWorkspaceUsers)
     } catch (error) {

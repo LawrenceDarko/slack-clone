@@ -2,12 +2,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-
-
-
 export const useFetch = (axiosParams: any) => {
-
-    axios.defaults.baseURL = 'https://882dce1872c3e1.lhr.life';
     const [response, setResponse] = useState(null);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(true);
@@ -16,7 +11,7 @@ export const useFetch = (axiosParams: any) => {
         try {
             const result = await axios.request(params);
             setResponse(result.data.data.paymentPages);
-        } catch( error: any ) {
+        } catch (error: any) {
             setError(error);
         } finally {
             setLoading(false);
@@ -25,7 +20,7 @@ export const useFetch = (axiosParams: any) => {
 
     useEffect(() => {
         fetchData(axiosParams);
-    }, []); // execute once only
+    }, [axiosParams]); // Trigger fetchData when axiosParams change
 
     return { response, error, loading };
 };

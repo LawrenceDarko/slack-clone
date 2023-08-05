@@ -10,9 +10,9 @@ router.post('/create', createWorkspace)
 router.post('/user-workspace', createUserWorkspace)
 
 // This fetches all workspaces belonging to a user
-router.get('/all-user-workspaces', fetchAllWorkspaceForAUser)
+router.get('/all-user-workspaces/:userId', fetchAllWorkspaceForAUser)
 
 // This fetches all users belonging to a workspace
-router.get('/all-workspace-users', fetchAllUsersForAWorkspace)
+router.get('/all-workspace-users/:workspaceId', fetchAllUsersForAWorkspace)
 
 export default router

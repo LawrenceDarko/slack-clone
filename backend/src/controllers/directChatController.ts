@@ -2,7 +2,14 @@ import { Request, Response } from 'express';
 import DirectChat from '../models/DirectChat';
 import DirectMessage from '../models/DirectMessage';
 
-const createDirectChat = async(req: Request, res: Response) => { 
+const createDirectChat = async(req: Request, res: Response) => {
+    
+    const existingDirectChat = await DirectChat.findOne(req.body)
+
+    if(existingDirectChat){
+        return res.status(401).json('Can create')
+    }
+
     const newDirectChat = new DirectChat(req.body)
 
     try {
@@ -16,7 +23,7 @@ const createDirectChat = async(req: Request, res: Response) => {
 
 const getADirectChatObj = async(req: Request, res: Response) => {
     const {senderId, receiverId} = req.params
-    const directChatObj = await DirectChat.find({
+    const directChatObj = await DirectChat.findOne({
         members: {$all: [senderId, receiverId]}
     })
 

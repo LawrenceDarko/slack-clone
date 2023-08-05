@@ -1,6 +1,6 @@
 
 'use client'
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import { FiEdit } from "react-icons/fi";
 import { PiFilesLight } from "react-icons/pi";
 import { IoIosArrowDown } from "react-icons/io";
@@ -12,7 +12,10 @@ import { RiArrowDownSFill, RiArrowRightSFill } from "react-icons/ri";
 import { GoStack } from "react-icons/go";
 import Link from 'next/link';
 import { usePathname } from "next/navigation";
-// import getCurrentPath from '@/app/utils/getCurrentPath';
+import { useParams } from "next/navigation";
+import axios from 'axios';
+import { useAuthContext } from '@/app/context/AuthContext';
+import { useRouter } from 'next/navigation';
 
 interface LinkProp {
     href: string;
@@ -35,9 +38,18 @@ const slackChannels: LinkProp[] = [
 ];
 const SideNavbar = () => {
 
+    const router = useRouter()
+    const params = useParams()
+    const workspaceId = params.workspaceId
+    // console.log(params.roomId)
+
+    const { user } = useAuthContext()
     const [channelDropdownState, setChannelDropdownState] = useState(true)
     const [directMessagesState, setDirectMessagesState] = useState(true)
+    const [worksapceUsers, setWorksapceUsers] = useState([])
     const pathname = usePathname();
+
+    // console.log(user.accessToken)
 
     const handleDropdowToggle = () => { 
         setChannelDropdownState(!channelDropdownState)
@@ -47,7 +59,35 @@ const SideNavbar = () => {
         setDirectMessagesState(!directMessagesState)
     }
 
-    // console.log(channelDropdownState)
+    const getWorkspaceUsers = async() => {
+        if(!workspaceId){
+            return
+        }
+        
+        try {
+            const response = await axios.get(`http://localhost:8000/api/workspace/all-workspace-users/${workspaceId}`, {
+                headers: {
+                    "Authorization": `Bearer ${user?.accessToken}`
+                }
+            })
+            const responseData = response?.data
+            console.log(responseData)
+            setWorksapceUsers(responseData.filter((directChatInfo: any) => directChatInfo.user._id !== user?.id))
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const handleDirectChatClick = (userId: any) => {
+        if(!userId) return
+        console.log('user id',userId)
+        router.push(`/client/${workspaceId}/${userId}`)
+    }
+
+    useEffect(() => {
+        getWorkspaceUsers()
+    }, [user])
+    
     
     return (
         <div className='hidden top-[44px] left-0 bottom-0 border-t-[1px] border-[#522653] min-[212px]:block md:fixed w-[20vw] bg-[#3F0E40] h-[93.8vh] overflow-auto'>
@@ -126,11 +166,11 @@ const SideNavbar = () => {
                         </div>
                         <div className={`px-1 ${directMessagesState? 'block' : 'hidden'}`}>
                             <ul className="flex flex-col items-stretch">
-                                {slackChannels.map((item, index) => (
-                                <li key={index} className={`relative block cursor-pointer ${pathname === item.href ? 'bg-[#1164A3]' : ''} hover:bg-[#4D2A51] rounded-md px-3 py-1`}>
-                                    <Link href={item.href} className={`flex gap-2 items-center text-[#B5A6B7] capitalize ${pathname === item.href ? "text-white hover:text-lightBlue-600" : "text-blueGray-700 hover:text-blueGray-500"}`}>
+                                {worksapceUsers?.map((item: any, index) => (
+                                <li key={index} onClick={()=>handleDirectChatClick(item?.user?._id)} className={`relative block cursor-pointer hover:bg-[#4D2A51] rounded-md px-3 py-1`}>
+                                    <Link href="" className={`flex gap-2 items-center text-[#B5A6B7] capitalize`}>
                                         <BiSolidUserRectangle className="w-5 h-5 text-white"/>
-                                        <p className='text-[min(1vw)]'>{item.text}</p>
+                                        <p className='text-[min(1vw)]'>{item?.user?.username}</p>
                                     </Link>
                                 </li>
                                 ))}
