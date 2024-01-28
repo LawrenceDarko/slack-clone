@@ -22,7 +22,8 @@ export default function RootLayout({
 }) {
 
   // const cookieStore = cookies()
-  // const user = cookieStore.get('user')
+  // const user = cookieStore.get('token')
+  // console.log(user)
 
   // const headersList = headers();
   // const activePath = headersList.get("/get-started/find");

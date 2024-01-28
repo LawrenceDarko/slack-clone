@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { BiSolidUserRectangle } from "react-icons/bi";
 import { IoMdSend } from "react-icons/io";
 import RoomNav from "@/app/components/navbars/RoomNav";
@@ -10,80 +10,118 @@ import axios from 'axios';
 import { useRouter } from "next/navigation";
 import { useParams } from 'next/navigation';
 import { useAuthContext } from "@/app/context/AuthContext";
+import { axiosPrivate } from '@/app/hooks/axios';
 
 const page = () => {
 
     const { user } = useAuthContext()
-    const [conversationObj, setConversationObj] = useState([])
-
+    const [messages, setMessages] = useState([]) as any
+    const [newMessage, setNewMessage] = useState("")
     const params = useParams()
+    const controller = new AbortController();
+    const lastMessageRef = useRef<HTMLDivElement | null>(null);
+    const directChatId = params.roomId
 
-    const getConversationObj = async() => {
-        if(!user){
-            return
-        }
-        const friendId = params.roomId
-        const personalId = user.id
-        const workspaceId = params.workspaceId
-        
+
+
+    const getAllMessagesBelongingToAChat = async() => {
+
         try {
-            const response = await axios.get(`http://localhost:8000/api/direct-chat/${personalId}/${friendId}`, {
-                headers: {
-                    "Authorization": `Bearer ${user?.accessToken}`
-                }
-            })
-            const responseData = response?.data
-            console.log(responseData)
+            const response = await axiosPrivate.get(`http://localhost:8000/api/direct-chat/${directChatId}`, {
+            withCredentials: true,
+            signal: controller.signal
+        })
+        const messagesData = response?.data
+        console.log(messagesData)
+        setMessages(messagesData)
+        } catch (error) {
+            console.log(error)
+        }
+        
+        // controller.abort()
+    }
 
-            if(responseData?.length < 1 || responseData === null || !responseData){
-                const newDirectChatData = {
-                    members: [friendId, personalId],
-                    worskpace_id: workspaceId
-                }
-                const res = await axios.post(`http://localhost:8000/api/direct-chat/create`, newDirectChatData, {
-                    headers: {
-                        "Authorization": `Bearer ${user?.accessToken}`
-                    } 
-                })
-                const chatResData = res.data
-                console.log(chatResData)
-            }
-            
-            setConversationObj(responseData)
+    const sendMessagge = async(e: any) => {
+        e.preventDefault()
+        const data = {
+            sender_id: user.id,
+            direct_chat_id: directChatId,
+            message_body: newMessage,
+            username: user.username
+        }
+
+        console.log(data)
+
+        try {
+            const response = await axiosPrivate.post(`http://localhost:8000/api/direct-chat/message`, data, {
+            withCredentials: true,
+            // signal: controller.signal
+        })
+        const messagesData = response?.data
+        await setMessages((prev: any)=>[...prev, messagesData])
+        setNewMessage('')
+        console.log(messagesData)
         } catch (error) {
             console.log(error)
         }
     }
 
-    const getAllMessagesBelongingToAChat = () => {
-        
-    }
+    useEffect(() => {
+        if (lastMessageRef.current) {
+            lastMessageRef.current.scrollIntoView({ behavior: "smooth" });
+        }
+    }, [messages]);
+
 
     useEffect(() => {
-        getConversationObj()
-    }, [user])
+        getAllMessagesBelongingToAChat()
+    }, [])
+    
     
 
     return (
         <div className='relative w-full h-screen'>
-            <RoomNav />
-            <section className="relative flex flex-col w-full h-full overflow-x-hidden overflow-y-auto">
-                <section className="w-full h-full gap-3 pt-72">
+            <RoomNav user={messages?.username}/>
+            <section className="flex flex-col flex-1 w-full h-full overflow-x-hidden overflow-y-auto">
+                <section className="w-full h-full gap-3 pb-10 overflow-y-auto pt-72">
                     <div className="flex items-center">
                         <BiSolidUserRectangle className='text-[#007A5A] text-9xl'/>
-                        <h1 className="font-semibold">Clarence</h1>
+                        <h1 className="font-semibold">{messages?.username}</h1>
                     </div>
                     <div className="px-3">
-                        <p>This conversation is just between @Francis Onuman Jr. and you. Check out their profile to learn more about them.</p>
+                        <p>{`This conversation is just between @${messages?.username}. and you. Check out their profile to learn more about them.`}</p>
                     </div>
                     <div className="flex px-3">
                         <div className="flex px-3 py-2 text-sm hover:bg-[#F8F8F8] border border-gray-400 rounded-[5px]">
                             <p>View Profile</p>
                         </div>
                     </div>
+                    {/* {messages && <section>
+                        {messages?.map((message: any, i: any)=> (
+                            <p key={i}>{message?.message_body}</p>
+                        ))}
+                    </section>} */}
+                    {messages && <section className='flex flex-col w-full h-full gap-3 p-3 cursor-pointer'>
+                        {messages?.map((message: any, i: any)=> (
+                        <div ref={i === messages.length - 1 ? lastMessageRef : null} key={i} className='flex items-start justify-start gap-2'>
+                            <div className='w-12 h-12 rounded-md'>
+                                <BiSolidUserRectangle className="w-full h-full text-gray-200"/>
+                            </div>
+                            <div>
+                                <p className='font-bold'>{message?.username}</p>
+                                <p className='text-normal'>{message?.message_body}</p>
+                            </div>
+                        </div>))}
+                    </section>}
                 </section>
-                <section className="absolute flex flex-col rounded-md active:border-black bottom-2 left-3 right-3 h-36  min-h-[144px] bg-white z-19">
-                    <TextEditor />
+                <section className="m-5 flex border-1 flex-col rounded-md active:border-black bottom-2 left-3 right-3 h-20  min-h-[50px] bg-white z-19">
+                    {/* <TextEditor /> */}
+                    <form action="" className='flex w-full h-full p-2 border'>
+                        <input className='w-full h-full outline-none' value={newMessage} onChange={(e: any)=>setNewMessage(e.target.value)}/>
+                        <button type='submit' onClick={sendMessagge}>
+                            <IoMdSend className="text-2xl text-green-800"/>
+                        </button>
+                    </form>
                 </section>
             </section>
         </div>

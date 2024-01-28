@@ -1,7 +1,8 @@
 'use client'
 
 import React, { useState, useReducer, useContext, useEffect, createContext } from "react"
-
+import { useRouter } from 'next/navigation';
+import axios from "axios"
 
 export const AuthContext = createContext(undefined) as any
 
@@ -21,8 +22,31 @@ export const AuthContextProvider = ({children}: {children: React.ReactNode}) => 
     const [state, dispatch] = useReducer(authReducer, {
         user: null
     })
+    const [cookieData, setCookieData] = useState()
+    const [auth, setAuth] = useState()
+    const router = useRouter()
 
     useEffect(() => {
+        const getCookies = async() => {
+        const cookie = await axios.get('/api/getCookies')
+        const cookieData = cookie?.data
+        console.log("My cookie",cookieData)
+
+        if(!cookieData?.cookie){
+            localStorage.removeItem('userData')
+            return router.push('/get-started/find')
+        }
+        // console.log(cookieData)
+        setCookieData(cookieData?.value)
+    }
+        getCookies()
+    }, [])
+
+    console.log(auth)
+
+    useEffect(() => {
+        // const localUser = localStorage.getItem('userData') as any
+        // console.log(localUser)
         const user = JSON.parse(localStorage.getItem('userData') as any)
 
         if(user){
@@ -33,7 +57,7 @@ export const AuthContextProvider = ({children}: {children: React.ReactNode}) => 
 
     console.log("Auth state:", state)
     return (
-        <AuthContext.Provider value={{...state, dispatch}}>
+        <AuthContext.Provider value={{...state, dispatch, cookieData, auth, setAuth }}>
             {children}
         </AuthContext.Provider>
     )

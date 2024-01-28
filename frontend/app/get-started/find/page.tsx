@@ -1,41 +1,52 @@
 'use client'
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFetch } from '@/app/hooks/useFetch';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useGeneralContext } from '@/app/context/GeneralContext';
 import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@/app/context/AuthContext';
+import { cookies } from 'next/headers';
+import useRefreshToken from '@/app/hooks/useRefreshToken';
 
 const Page = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { setUser } = useGeneralContext()
     const router = useRouter()
-    const { dispatch } = useAuthContext()
+    const { dispatch, setAuth } = useAuthContext()
+    const refresh = useRefreshToken()
+
+    // const cookieStore = cookies()
+    // const user = cookieStore.get('token')
+
+    // console.log(user)
 
     const handleFormSubmit = async (e: any) => {
         e.preventDefault();
             // "Authorization": `Bearer ${Cookies.get('refreshToken')}`
-        const loginData = { email, password}
+        const loginData = { email, password }
         try {
             const response = await axios.post('http://localhost:8000/api/users/login', loginData, {
-                headers: {
-                    "Authorization": `Bearer ${Cookies.get('refreshToken')}`
-                }
+                withCredentials: true
             })
             const data = response?.data;
-            setUser(data)
-            console.log(data);
+            // setUser(data)
+            console.log(data?.data);
+            
             if(data?.status === 'success'){
-                localStorage.setItem('userData', JSON.stringify(data.data))
+                const userdata = localStorage.setItem('userData', JSON.stringify(data.data))
+                console.log(userdata)
                 dispatch({type: 'LOGIN', payload: data.data})
+                setAuth(data?.data)
                 router.push('/get-started/landing')
             }
         } catch (error) {
             console.error('Error occurred while fetching data:', error);
         }
     };
+
+
 
 return (
     <form
@@ -70,6 +81,7 @@ return (
         Continue With Email
         </button>
     </div>
+    {/* <button onClick={refresh}>Refresh</button> */}
     </form>
 );
 };

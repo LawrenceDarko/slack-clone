@@ -1,6 +1,6 @@
 
 'use client'
-import React, {useState, useEffect} from 'react'
+import React, {useState, useEffect, useCallback} from 'react'
 import { FiEdit } from "react-icons/fi";
 import { PiFilesLight } from "react-icons/pi";
 import { IoIosArrowDown } from "react-icons/io";
@@ -16,6 +16,7 @@ import { useParams } from "next/navigation";
 import axios from 'axios';
 import { useAuthContext } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import useAxiosPrivate from '@/app/hooks/useAxiosPrivate';
 
 interface LinkProp {
     href: string;
@@ -41,12 +42,15 @@ const SideNavbar = () => {
     const router = useRouter()
     const params = useParams()
     const workspaceId = params.workspaceId
+    const axiosPrivate = useAxiosPrivate();
+    const controller = new AbortController();
     // console.log(params.roomId)
 
-    const { user } = useAuthContext()
+    const { user, auth } = useAuthContext()
     const [channelDropdownState, setChannelDropdownState] = useState(true)
     const [directMessagesState, setDirectMessagesState] = useState(true)
     const [worksapceUsers, setWorksapceUsers] = useState([])
+    const [conversationObj, setConversationObj] = useState(null) as any
     const pathname = usePathname();
 
     // console.log(user.accessToken)
@@ -63,26 +67,70 @@ const SideNavbar = () => {
         if(!workspaceId){
             return
         }
+
+        const controller = new AbortController();
         
         try {
-            const response = await axios.get(`http://localhost:8000/api/workspace/all-workspace-users/${workspaceId}`, {
-                headers: {
-                    "Authorization": `Bearer ${user?.accessToken}`
-                }
+            const response = await axiosPrivate.get(`http://localhost:8000/api/workspace/all-workspace-users/${workspaceId}`, {
+                // headers: {
+                //     "Authorization": `Bearer ${auth?.user?.accessToken}`
+                // }
+                withCredentials: true,
+                // signal: controller.signal
             })
             const responseData = response?.data
             console.log(responseData)
             setWorksapceUsers(responseData.filter((directChatInfo: any) => directChatInfo.user._id !== user?.id))
+            
         } catch (error) {
             console.log(error)
         }
+
+        // controller.abort()
     }
 
-    const handleDirectChatClick = (userId: any) => {
-        if(!userId) return
-        console.log('user id',userId)
-        router.push(`/client/${workspaceId}/${userId}`)
-    }
+    
+
+
+    const getConversationObj = useCallback(async(id: any) => {
+        if(!user ){
+            return
+        }
+        const friendId = id
+        const personalId = user.id
+        const workspaceId = params.workspaceId
+        
+        try {
+            const response = await axiosPrivate.get(`http://localhost:8000/api/direct-chat/${personalId}/${friendId}`, {
+                withCredentials: true,
+                // signal: controller.signal
+            })
+            
+            const responseData = response?.data
+            console.log('Direct msg',responseData)
+            await setConversationObj(responseData)
+
+            if(responseData?.length < 1 || responseData === null || !responseData){
+                const newDirectChatData = {
+                    members: [friendId, personalId],
+                    worskpace_id: workspaceId
+                }
+                const res = await axiosPrivate.post(`http://localhost:8000/api/direct-chat/create`, newDirectChatData, {
+                    withCredentials: true,
+                    // signal: controller.signal
+                })
+                const chatResponseData = res?.data
+                console.log(chatResponseData)
+                await setConversationObj(chatResponseData)
+            }
+
+            // redirect user to chats page
+            router.push(`/client/${workspaceId}/${responseData._id}`)
+        } catch (error) {
+            console.log(error)
+        }
+    },[conversationObj])
+
 
     useEffect(() => {
         getWorkspaceUsers()
@@ -167,7 +215,7 @@ const SideNavbar = () => {
                         <div className={`px-1 ${directMessagesState? 'block' : 'hidden'}`}>
                             <ul className="flex flex-col items-stretch">
                                 {worksapceUsers?.map((item: any, index) => (
-                                <li key={index} onClick={()=>handleDirectChatClick(item?.user?._id)} className={`relative block cursor-pointer hover:bg-[#4D2A51] rounded-md px-3 py-1`}>
+                                <li key={index} onClick={()=>getConversationObj(item?.user?._id)} className={`relative block cursor-pointer hover:bg-[#4D2A51] rounded-md px-3 py-1`}>
                                     <Link href="" className={`flex gap-2 items-center text-[#B5A6B7] capitalize`}>
                                         <BiSolidUserRectangle className="w-5 h-5 text-white"/>
                                         <p className='text-[min(1vw)]'>{item?.user?.username}</p>

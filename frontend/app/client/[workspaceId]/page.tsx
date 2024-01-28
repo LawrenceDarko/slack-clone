@@ -12,7 +12,7 @@ const page = () => {
   const params = useParams()
     const workspaceId = params.workspaceId
 
-    console.log(workspaceId)
+    // console.log(workspaceId)
 
   
 

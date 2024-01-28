@@ -9,6 +9,7 @@ const jwtRefreshTokenSecret = process.env.REFRESH_TOKEN_SECRET as string
 
 interface JwtPayload {
     userId: string;
+    exp: any
 }
 
 // Define a new type that extends the existing Request type and includes the 'user' property
@@ -20,7 +21,7 @@ interface AuthenticatedRequest extends Request {
 
 const protect = async(req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
-    const refreshToken = req.cookies['refreshToken'];
+    // const refreshToken = req.cookies['refreshToken'];
     let token
     if(authHeader && authHeader.startsWith('Bearer')){
         try {
@@ -30,25 +31,23 @@ const protect = async(req: AuthenticatedRequest, res: Response, next: NextFuncti
             // verify token
             const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
 
-            req.user = await User.findById(decoded.userId).select('-password');
+            if(decoded.exp * 1000 < Date.now()){
+                return res.status(401).json({message: 'Token expired'})
+            }
 
+            req.user = await User.findById(decoded.userId).select('-password');
             // This also works
             // req.body.user = await User.findById(decoded.userId).select('-password');
-
             next()
         } catch (error) {
             console.log(error);
             res.status(403).json('Not authorized, token invalid');
-            // if (!refreshToken) {
-            //     return res.status(401).send('Access Denied. No refresh token provided.');
-            // }
-            // return res.redirect('/refresh')
         }
     }
 
-    if(!token && !refreshToken){
-        res.status(401).json('Not authorized, no token')
-    }
+    // if(!token && !refreshToken){
+    //     res.status(401).json('Not authorized, no token')
+    // }
 }
 
 export default protect

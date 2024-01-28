@@ -3,14 +3,15 @@
 import React, { useState, useEffect} from "react";
 import WorkspaceItem from './WorkspaceItem'
 import { useAuthContext } from '@/app/context/AuthContext'
-import axios from "axios";
+import useAxiosPrivate from "@/app/hooks/useAxiosPrivate";
 import { useRouter } from "next/navigation";
 
 const WorkspacesCard = () => {
 
     const [workpaces, setWorkpaces] = useState() as any
-    const { user } = useAuthContext()
+    const { user, auth } = useAuthContext()
     const router = useRouter()
+    const axiosPrivate = useAxiosPrivate();
 
     const getData = async() => {
 
@@ -18,18 +19,22 @@ const WorkspacesCard = () => {
         return console.log("You must be logged in")
     }
 
+    const controller = new AbortController();
+
     try {
-        const response = await axios.get(`http://localhost:8000/api/workspace/all-user-workspaces/${user?.id}`, {
-            headers: {
-                "Authorization": `Bearer ${user?.accessToken}`
-            }
+        const response = await axiosPrivate.get(`http://localhost:8000/api/workspace/all-user-workspaces/${user?.id}`, {
+            // headers: {
+            //     "Authorization": `Bearer ${auth?.user?.accessToken}`
+            // }
+            signal: controller.signal,
+            withCredentials: true
         })
         const responseData = response.data
         setWorkpaces(responseData)
         console.log(responseData)
 
         responseData.map((item: any)=>(console.log(item.workspace.name)))
-
+        // controller.abort()
         } catch (error) {
             console.log(error)
         }
@@ -50,8 +55,8 @@ const WorkspacesCard = () => {
                 <p>Workspaces for darkolawrence@gmail.com</p>
             </div>
             <div className='flex flex-col w-full h-full'>
-                {workpaces?.map((item: any) => 
-                    <div onClick={()=>handleOnclick(item.workspace._id)}>
+                {workpaces?.map((item: any, i: any) => 
+                    <div key={i} onClick={()=>handleOnclick(item.workspace._id)}>
                         <WorkspaceItem spaceName={item.workspace.name} />
                     </div>
                 )}

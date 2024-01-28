@@ -14,13 +14,13 @@ interface JwtPayload {
 
 export const generateAccessToken = (userId: any) => {
     return jwt.sign({userId}, jwtAccessTokenSecret, {
-        expiresIn: '20s'
+        expiresIn: '1h'
     })
 }
 
 const refreshAToken = async(req: Request, res: Response) => {
     // res.status(200).json('token refreshed')
-    const refreshToken = req.cookies['refreshToken'];
+    const refreshToken = req.cookies['token'];
     if (!refreshToken) {
         return res.status(401).send('Access Denied. No refresh token provided.');
     }
@@ -30,7 +30,7 @@ const refreshAToken = async(req: Request, res: Response) => {
         const accessToken = generateAccessToken(decoded.userId)
 
         req.headers.authorization = `Bearer ${accessToken}`
-        res.header('Authorization', accessToken).json({
+        res.status(200).json({
             userId: decoded.userId,
             newAccessToken: accessToken
         });

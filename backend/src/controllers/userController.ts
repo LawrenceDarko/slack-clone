@@ -11,15 +11,15 @@ dotevn.config()
 const jwtSecret = process.env.ACCESS_TOKEN_SECRET as string;
 const jwtRefreshToken = process.env.REFRESH_TOKEN_SECRET as string
 
-export const generateToken = (userId: any) => {
+export const generateAccessToken = (userId: any) => {
     return jwt.sign({userId}, jwtSecret, {
-        expiresIn: '7d'
+        expiresIn: '24h'
     })
 }
 
 export const generateRefreshToken = (userId: any) => {
     return jwt.sign({userId}, jwtRefreshToken, {
-        expiresIn: '20d'
+        expiresIn: '3m'
     })
 }
 
@@ -43,7 +43,7 @@ const registerUser = async(req: Request, res: Response) => {
     try {
         const newUser = await User.create({username, email, password: hashedPassword})
         const savedUser = await newUser.save();
-        const access_token = generateToken(savedUser._id)
+        const access_token = generateAccessToken(savedUser._id)
         const refresh_token = generateRefreshToken(savedUser._id)
         res.status(201).json({
             id: savedUser._id,
@@ -77,9 +77,10 @@ const loginUser = async (req: Request, res: Response) => {
 
         // If user exists decrypt their password and if the entered password is equal to the decrypted one
         if (user && user.password && (await bcrypt.compare(password, user.password))) {
-            const access_token = generateToken(user._id)
+            const access_token = generateAccessToken(user._id)
             const refresh_token = generateRefreshToken(user._id)
 
+            // console.log(refresh_token)
 
             let cookieInfo = {
                 refreshToken: refresh_token,
@@ -93,7 +94,8 @@ const loginUser = async (req: Request, res: Response) => {
 
 
             res.cookie("token", refresh_token, {
-                httpOnly: true
+                httpOnly: true,
+                maxAge: 3 * 60 * 1000
             })
 
             return res.status(200).json({
@@ -103,7 +105,7 @@ const loginUser = async (req: Request, res: Response) => {
                     username: user.username,
                     email: user.email,
                     accessToken: access_token,
-                    refreshToken: refresh_token
+                    // refreshToken: refresh_token
                 }
             });
         } else {

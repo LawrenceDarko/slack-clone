@@ -21,22 +21,24 @@ const app = express()
 
 
 app.use(cors({
-    credentials: true
+    origin:'http://localhost:3000', 
+    credentials:true,        
 }));
 
 // middlewares
 app.use(express.json());
-app.use(cookieParser());
+app.use(cookieParser(process.env.JWT_SECRET));
 
 app.use('/api/users', userRoutes)
 app.use('/api/workspace', protect, workspaceRoutes)
 app.use('/api/channels', protect, channelRoutes)
 app.use('/api/direct-chat', protect, directChatRoutes)
-app.use('/refresh', tokenRoutes)
+// app.use('/refresh', tokenRoutes)
 
 // connect to db
 mongoose.connect(process.env.MONGO_URI).then(()=>{
     app.listen(process.env.PORT, ()=>{
+        console.log("Connected to DB")
         console.log("Server running on port", process.env.PORT)
     })    
 })

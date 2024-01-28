@@ -5,7 +5,7 @@ const RedirectComponent = () => {
     const router = useRouter()
     
     useEffect(() => {
-        router.push('/client')
+        // router.push('/client')
     }, [])
     
 
