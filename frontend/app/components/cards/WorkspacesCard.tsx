@@ -5,6 +5,7 @@ import WorkspaceItem from './WorkspaceItem'
 import { useAuthContext } from '@/app/context/AuthContext'
 import useAxiosPrivate from "@/app/hooks/useAxiosPrivate";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 const WorkspacesCard = () => {
 
@@ -59,6 +60,9 @@ const WorkspacesCard = () => {
                     <div key={i} onClick={()=>handleOnclick(item.workspace._id)}>
                         <WorkspaceItem spaceName={item.workspace.name} />
                     </div>
+                    // <Link href={`client/${item.workspace._id}`} key={i}>
+                    //     <WorkspaceItem spaceName={item.workspace.name} />
+                    // </Link>
                 )}
             </div>
         </div>

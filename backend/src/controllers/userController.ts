@@ -78,22 +78,12 @@ const loginUser = async (req: Request, res: Response) => {
         // If user exists decrypt their password and if the entered password is equal to the decrypted one
         if (user && user.password && (await bcrypt.compare(password, user.password))) {
             const access_token = generateAccessToken(user._id)
-            const refresh_token = generateRefreshToken(user._id)
+            // const refresh_token = generateRefreshToken(user._id)
 
             // console.log(refresh_token)
 
-            let cookieInfo = {
-                refreshToken: refresh_token,
-                userData: {
-                    id: user._id,
-                    username: user.username,
-                    email: user.email
-                    // Add more user data fields if needed
-                }
-            }
 
-
-            res.cookie("token", refresh_token, {
+            res.cookie("token", access_token, {
                 httpOnly: true,
                 maxAge: 3 * 60 * 1000
             })

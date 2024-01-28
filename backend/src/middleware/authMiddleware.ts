@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const jwtSecret = process.env.ACCESS_TOKEN_SECRET as string;
-const jwtRefreshTokenSecret = process.env.REFRESH_TOKEN_SECRET as string
+// const jwtRefreshTokenSecret = process.env.REFRESH_TOKEN_SECRET as string
 
 interface JwtPayload {
     userId: string;
@@ -27,27 +27,30 @@ const protect = async(req: AuthenticatedRequest, res: Response, next: NextFuncti
         try {
             // Get token from header
             token = authHeader.split(' ')[1];
-
+            // console.log("Token is:", token)
             // verify token
-            const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+            const decoded =  jwt.verify(token, jwtSecret) as JwtPayload;
+            // console.log("DECODED JWT: ",decoded)
 
             if(decoded.exp * 1000 < Date.now()){
-                return res.status(401).json({message: 'Token expired'})
+                // return res.status(401).json({message: 'Token expired'})
+                res.redirect(`${process.env.FRONTEND_URL}/get-started/find`)
             }
 
             req.user = await User.findById(decoded.userId).select('-password');
-            // This also works
-            // req.body.user = await User.findById(decoded.userId).select('-password');
+
             next()
         } catch (error) {
-            console.log(error);
-            res.status(403).json('Not authorized, token invalid');
+            console.log("JWT ERROR: ",error);
+            // res.status(403).json('Not authorized, token invalid');
+            res.redirect(`${process.env.FRONTEND_URL}/get-started/find`)
         }
     }
 
-    // if(!token && !refreshToken){
-    //     res.status(401).json('Not authorized, no token')
-    // }
+    if(!token){
+        // res.status(401).json('Not authorized, no token')
+        res.redirect(`${process.env.FRONTEND_URL}/get-started/find`)
+    }
 }
 
 export default protect

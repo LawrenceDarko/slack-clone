@@ -8,14 +8,14 @@ import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@/app/context/AuthContext';
 import { cookies } from 'next/headers';
 import useRefreshToken from '@/app/hooks/useRefreshToken';
+import { RiLoader4Fill } from 'react-icons/ri';
 
 const Page = () => {
     const [email, setEmail] = useState('');
+    const [loading, setLoading] = useState(false)
     const [password, setPassword] = useState('');
-    const { setUser } = useGeneralContext()
     const router = useRouter()
-    const { dispatch, setAuth } = useAuthContext()
-    const refresh = useRefreshToken()
+    const { dispatch } = useAuthContext()
 
     // const cookieStore = cookies()
     // const user = cookieStore.get('token')
@@ -27,22 +27,22 @@ const Page = () => {
             // "Authorization": `Bearer ${Cookies.get('refreshToken')}`
         const loginData = { email, password }
         try {
+            setLoading(true)
             const response = await axios.post('http://localhost:8000/api/users/login', loginData, {
                 withCredentials: true
             })
             const data = response?.data;
-            // setUser(data)
             console.log(data?.data);
             
             if(data?.status === 'success'){
                 const userdata = localStorage.setItem('userData', JSON.stringify(data.data))
-                console.log(userdata)
                 dispatch({type: 'LOGIN', payload: data.data})
-                setAuth(data?.data)
                 router.push('/get-started/landing')
             }
         } catch (error) {
             console.error('Error occurred while fetching data:', error);
+        } finally {
+            setLoading(false)
         }
     };
 
@@ -78,7 +78,7 @@ return (
             type="submit"
             className="mt-5 cursor-pointer flex rounded-sm text-white bg-[#3f1b3f] justify-center items-center h-10 w-[75%]"
         >
-        Continue With Email
+        {loading? <RiLoader4Fill className="text-white animate-spin"/> : "Continue With Email"}
         </button>
     </div>
     {/* <button onClick={refresh}>Refresh</button> */}
