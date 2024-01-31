@@ -1,17 +1,22 @@
 import { Request, Response } from 'express';
 import DirectChat from '../models/DirectChat';
 import DirectMessage from '../models/DirectMessage';
+import { generateDirectChatId } from '../helpers/generateADirectChatId';
 
 // Creates a direct chat between two users. It takes members[senderId, receiverId] and workspace_id
 const createDirectChat = async(req: Request, res: Response) => {
     
+    const {members, workspace_id} = req.body;
+
+    const space_id = await generateDirectChatId()
+
     const existingDirectChat = await DirectChat.findOne(req.body)
 
     if(existingDirectChat){
         return res.status(401).json("Can't create")
     }
 
-    const newDirectChat = new DirectChat(req.body)
+    const newDirectChat = new DirectChat({members, workspace_id, space_id})
 
     try {
         const savedDirectChat = await newDirectChat.save();
@@ -31,6 +36,19 @@ const getADirectChatObj = async(req: Request, res: Response) => {
 
     try {
         res.status(200).json(directChatObj)
+    } catch (error) {
+        res.status(400).json(error)
+    }
+}
+
+// Get direct chat object using the direct_chat_id
+const getADirectChatObjUsingRoomId = async(req: Request, res: Response) => {
+    const {directId} = req.params
+    // console.log(directId)
+    const directChatObj = await DirectChat.findOne({_id: directId})
+
+    try {
+        res.status(200).json({status: 'success', data: directChatObj})
     } catch (error) {
         res.status(400).json(error)
     }
@@ -66,5 +84,6 @@ const getDirectChatMessages = async(req: Request, res: Response) => {
 export {createDirectChat, 
         createDirectMessage, 
         getDirectChatMessages, 
-        getADirectChatObj
+        getADirectChatObj,
+        getADirectChatObjUsingRoomId
     }

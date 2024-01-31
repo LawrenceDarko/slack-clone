@@ -5,6 +5,7 @@ const ChannelSchema = new mongoose.Schema({
     members: { type: Array },
     workspace_id: { type: String },
     created_by: { type: String },
+    space_id: { type: String },
     access_type: {
         type: String,
         enum: ['public', 'private', 'restricted'], // Define the allowed enum values here

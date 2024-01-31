@@ -22,11 +22,10 @@ interface AuthenticatedRequest extends Request {
 const protect = async(req: AuthenticatedRequest, res: Response, next: NextFunction) => {
     const authHeader = req.headers.authorization;
     // const refreshToken = req.cookies['refreshToken'];
-    let token
     if(authHeader && authHeader.startsWith('Bearer')){
         try {
             // Get token from header
-            token = authHeader.split(' ')[1];
+            const token = authHeader.split(' ')[1];
             // console.log("Token is:", token)
             // verify token
             const decoded =  jwt.verify(token, jwtSecret) as JwtPayload;
@@ -45,11 +44,6 @@ const protect = async(req: AuthenticatedRequest, res: Response, next: NextFuncti
             // res.status(403).json('Not authorized, token invalid');
             res.redirect(`${process.env.FRONTEND_URL}/get-started/find`)
         }
-    }
-
-    if(!token){
-        // res.status(401).json('Not authorized, no token')
-        res.redirect(`${process.env.FRONTEND_URL}/get-started/find`)
     }
 }
 

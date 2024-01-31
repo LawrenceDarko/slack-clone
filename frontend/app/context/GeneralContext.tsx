@@ -1,10 +1,19 @@
 'use client'
 
-import React, { useState, createContext, useContext } from 'react';
+import React, { useState, createContext, useContext, useEffect } from 'react';
+import useAxiosPrivate from "@/app/hooks/useAxiosPrivate";
+import { useParams } from 'next/navigation';
+import axios from 'axios';
+import { useAuthContext } from './AuthContext';
 
 interface GeneralContextType {
-    user: any;
-    setUser: any
+    showModal: boolean;
+    setShowModal: (value: boolean) => void;
+    getWorkspaceChannels: () => void;
+    channelList: any;
+    getWorkspaceUsers: () => void;
+    worksapceUsers: any;
+    
 }
 
 export const GeneralContext = createContext<GeneralContextType | undefined>(undefined);
@@ -14,14 +23,63 @@ interface GeneralContextProviderProps {
 }
 
 export const GeneralContextProvider: React.FC<GeneralContextProviderProps> = ({ children }) => {
-    const [user, setUser] = useState()
+    const params = useParams()
+    const workspaceId = params.workspaceId
+    const axiosInstance = useAxiosPrivate();
+    const { user } = useAuthContext()
+
+    const [showModal, setShowModal] = useState(false);
+    const [channelList, setChannelList] = useState<any>([])
+    const [worksapceUsers, setWorksapceUsers] = useState([])
+    const [friendInfo, setFriendInfo] = useState()
+    // console.log(user)
+
+    const getWorkspaceChannels = async() => {
+        
+        try {
+            if(workspaceId){
+            // console.log("WS ID", workspaceId)
+            const response = await axiosInstance.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/channels/workspace-channels/${workspaceId}`)
+            const responseData = response?.data
+            setChannelList(responseData.data)
+            // getWorkspaceChannels()
+            console.log("CHANNELS:", responseData.data)
+            }
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const getWorkspaceUsers = async() => {
+        if(!workspaceId || !user) return;
+            
+        try {
+            const response = await axiosInstance.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/all-workspace-users/${workspaceId}`)
+            const responseData = response?.data
+            console.log(responseData)
+            setWorksapceUsers(responseData.filter((directChatInfo: any) => directChatInfo.user._id !== user?.id))
+            
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    useEffect(() => {
+        getWorkspaceChannels()
+        getWorkspaceUsers()
+    }, [workspaceId])
 
     
 
+
     return (
         <GeneralContext.Provider value={{
-            user,
-            setUser,
+            showModal,
+            setShowModal,
+            getWorkspaceChannels,
+            channelList,
+            getWorkspaceUsers,
+            worksapceUsers
         }}>
         {children}
         </GeneralContext.Provider>

@@ -5,7 +5,7 @@ import { BiSolidUserRectangle } from "react-icons/bi";
 
 const TopNavbar = () => {
     return (
-        <div className='h-[44px] z-50 bg-[#350D36] w-full overflow-hidden fixed'>
+        <div className='h-[44px] z-40 bg-[#350D36] w-full overflow-hidden fixed'>
             <div className='relative flex items-center justify-center w-full h-full'>
                 <section className='flex items-center justify-center w-1/2 gap-3'>
                     <IoTimeOutline className='text-2xl text-white'/>

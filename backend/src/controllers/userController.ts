@@ -44,13 +44,13 @@ const registerUser = async(req: Request, res: Response) => {
         const newUser = await User.create({username, email, password: hashedPassword})
         const savedUser = await newUser.save();
         const access_token = generateAccessToken(savedUser._id)
-        const refresh_token = generateRefreshToken(savedUser._id)
+        // const refresh_token = generateRefreshToken(savedUser._id)
         res.status(201).json({
             id: savedUser._id,
             username: savedUser.username,
             email: savedUser.email,
             accessToken: access_token,
-            refreshToken: refresh_token
+            // refreshToken: refresh_token
         });
     } catch (error) {
         res.status(400).json(error);
@@ -119,4 +119,17 @@ const getAllUsers = async(req: Request, res: Response) => {
     }
 }
 
-export {registerUser, getAllUsers, loginUser}
+// A controller to get a single user
+
+const getAUser = async(req: Request, res: Response) => {
+    const { userId } = req.params
+    const user = await User.findById(userId)
+
+    try {
+        res.status(200).json({status: "success", data: user})
+    } catch (error) {
+        res.status(400).json(error)
+    }
+}
+
+export {registerUser, getAllUsers, loginUser, getAUser}

@@ -17,6 +17,8 @@ import axios from 'axios';
 import { useAuthContext } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import useAxiosPrivate from '@/app/hooks/useAxiosPrivate';
+import MenuItem from './MenuItem';
+import { useGeneralContext } from '@/app/context/GeneralContext';
 
 interface LinkProp {
     href: string;
@@ -37,21 +39,31 @@ const slackChannels: LinkProp[] = [
     { href: "/files", text: "announcements", IconComponent: GoStack },
     { href: "/browse_slack", text: "discussions", IconComponent: BiDotsVerticalRounded },
 ];
+
 const SideNavbar = () => {
 
     const router = useRouter()
     const params = useParams()
     const workspaceId = params.workspaceId
     const axiosPrivate = useAxiosPrivate();
-    const controller = new AbortController();
     // console.log(params.roomId)
 
-    const { user, auth } = useAuthContext()
+    const { user } = useAuthContext()
+    const { setShowModal,
+            getWorkspaceChannels, 
+            channelList,
+            getWorkspaceUsers,
+            worksapceUsers 
+        } = useGeneralContext()
     const [channelDropdownState, setChannelDropdownState] = useState(true)
     const [directMessagesState, setDirectMessagesState] = useState(true)
-    const [worksapceUsers, setWorksapceUsers] = useState([])
     const [conversationObj, setConversationObj] = useState(null) as any
     const pathname = usePathname();
+    const [isOpen, setIsOpen] = useState(false)
+
+    const toggleOpen = useCallback(() => {
+        setIsOpen((value) => !value);
+    }, [],)
 
     // console.log(user.accessToken)
 
@@ -63,36 +75,9 @@ const SideNavbar = () => {
         setDirectMessagesState(!directMessagesState)
     }
 
-    const getWorkspaceUsers = async() => {
-        if(!workspaceId){
-            return
-        }
 
-        const controller = new AbortController();
-        
-        try {
-            const response = await axiosPrivate.get(`http://localhost:8000/api/workspace/all-workspace-users/${workspaceId}`, {
-                // headers: {
-                //     "Authorization": `Bearer ${auth?.user?.accessToken}`
-                // }
-                withCredentials: true,
-                // signal: controller.signal
-            })
-            const responseData = response?.data
-            console.log(responseData)
-            setWorksapceUsers(responseData.filter((directChatInfo: any) => directChatInfo.user._id !== user?.id))
-            
-        } catch (error) {
-            console.log(error)
-        }
-
-        // controller.abort()
-    }
-
-    
-
-
-    const getConversationObj = useCallback(async(id: any) => {
+    const getConversationObj = async(id: any) => {
+        console.log(id)
         if(!user ){
             return
         }
@@ -101,7 +86,7 @@ const SideNavbar = () => {
         const workspaceId = params.workspaceId
         
         try {
-            const response = await axiosPrivate.get(`http://localhost:8000/api/direct-chat/${personalId}/${friendId}`, {
+            const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/direct-chat/${personalId}/${friendId}`, {
                 withCredentials: true,
                 // signal: controller.signal
             })
@@ -109,13 +94,13 @@ const SideNavbar = () => {
             const responseData = response?.data
             console.log('Direct msg',responseData)
             await setConversationObj(responseData)
-
+            
             if(responseData?.length < 1 || responseData === null || !responseData){
                 const newDirectChatData = {
                     members: [friendId, personalId],
                     worskpace_id: workspaceId
                 }
-                const res = await axiosPrivate.post(`http://localhost:8000/api/direct-chat/create`, newDirectChatData, {
+                const res = await axiosPrivate.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/direct-chat/create`, newDirectChatData, {
                     withCredentials: true,
                     // signal: controller.signal
                 })
@@ -123,18 +108,19 @@ const SideNavbar = () => {
                 console.log(chatResponseData)
                 await setConversationObj(chatResponseData)
             }
-
             // redirect user to chats page
             router.push(`/client/${workspaceId}/${responseData._id}`)
         } catch (error) {
-            console.log(error)
+            console.log("GETTING CONVERSATION ERROR",error)
         }
-    },[conversationObj])
+    }
 
 
     useEffect(() => {
         getWorkspaceUsers()
+        getWorkspaceChannels()
     }, [user])
+    
     
     
     return (
@@ -142,9 +128,30 @@ const SideNavbar = () => {
             <div className='flex flex-col w-full h-full'>
                 <section className='flex flex-col gap-4 px-5 pt-2'>
                     <div className='flex items-center justify-between'>
-                        <div className='flex items-center gap-2 '>
+                        <div className='relative w-[500px]'>
+                        <div onClick={toggleOpen} className='flex items-center gap-2 cursor-pointer'>
                             <h1 className='font-bold text-white'>Computing Physics</h1>
                             <IoIosArrowDown className='text-white'/>
+                        </div>
+                        {isOpen && (
+                            <div className='absolute z-50 overflow-hidden text-sm bg-white rounded-md shadow-md w-60 left-5 top-7'>
+                                <div className="flex flex-col cursor-pointer">
+                                    <>
+                                        <MenuItem onClick={()=>{
+                                            toggleOpen()
+                                        }} 
+                                        label='New Workspace
+                                        '/>
+                                        <hr/>
+                                        <MenuItem onClick={()=>{
+                                            setShowModal(true)
+                                            toggleOpen()
+                                        }} 
+                                        label='Create Channel'/>
+                                    </>
+                                </div>
+                            </div>
+                        )}
                         </div>
                         <div className='flex items-center justify-center p-3 bg-white rounded-full'>
                             <FiEdit className='text-[#3F0E40] text-xl'/>
@@ -160,10 +167,10 @@ const SideNavbar = () => {
                     <ul className="flex flex-col items-stretch">
                         {slackSideLinks.map((item, index) => (
                         <li key={index} className="relative block cursor-pointer hover:bg-[#4D2A51] rounded-md px-3 py-1">
-                            <Link href={item.href} className={`flex gap-3 items-center text-[#B5A6B7] capitalize ${pathname === item.href ? "text-lightBlue-500 hover:text-lightBlue-600" : "text-blueGray-700 hover:text-blueGray-500"}`}>
+                            <div className={`flex gap-3 items-center text-[#B5A6B7] capitalize ${pathname === item.href ? "text-lightBlue-500 hover:text-lightBlue-600" : "text-blueGray-700 hover:text-blueGray-500"}`}>
                                 <item.IconComponent className='text-[1vw]'/>
                                 <p className='text-[min(1vw)]'>{item.text}</p>
-                            </Link>
+                            </div>
                         </li>
                         ))}
                     </ul>
@@ -183,15 +190,15 @@ const SideNavbar = () => {
                         </div>
                         <div className={`px-1 ${channelDropdownState? 'block' : 'hidden'}`}>
                             <ul className="flex flex-col items-stretch">
-                                {slackChannels.map((item, index) => (
+                                {channelList?.map((item: any, index: number) => (
                                 <li key={index} className={`relative block cursor-pointer ${pathname === item.href ? 'bg-[#1164A3]' : ''} hover:bg-[#4D2A51] rounded-md px-4 py-1`}>
-                                    <Link href={item.href} className={`flex gap-3 items-center text-[#B5A6B7] capitalize ${pathname === item.href ? "text-white hover:text-lightBlue-600" : "text-blueGray-700 hover:text-blueGray-500"}`}>
+                                    <div className={`flex gap-3 items-center text-[#B5A6B7] capitalize ${pathname === item.href ? "text-white hover:text-lightBlue-600" : "text-blueGray-700 hover:text-blueGray-500"}`}>
                                         <p>#</p>
-                                        <p className='text-[min(1vw)]'>{item.text}</p>
-                                    </Link>
+                                        <p className='text-[min(1vw)]'>{item.name}</p>
+                                    </div>
                                 </li>
                                 ))}
-                                <li className={`relative block cursor-pointer rounded-md px-4 py-1`}>
+                                <li onClick={()=>setShowModal(true)} className={`relative block cursor-pointer rounded-md px-4 py-1`}>
                                     <Link href={""} className={`flex gap-3 items-center text-[#B5A6B7] capitalize `}>
                                         <p>+</p>
                                         <p className='text-[min(1vw)]'>Add Channel</p>
@@ -214,12 +221,12 @@ const SideNavbar = () => {
                         </div>
                         <div className={`px-1 ${directMessagesState? 'block' : 'hidden'}`}>
                             <ul className="flex flex-col items-stretch">
-                                {worksapceUsers?.map((item: any, index) => (
+                                {worksapceUsers?.map((item: any, index: number) => (
                                 <li key={index} onClick={()=>getConversationObj(item?.user?._id)} className={`relative block cursor-pointer hover:bg-[#4D2A51] rounded-md px-3 py-1`}>
-                                    <Link href="" className={`flex gap-2 items-center text-[#B5A6B7] capitalize`}>
+                                    <div className={`flex gap-2 items-center text-[#B5A6B7] capitalize`}>
                                         <BiSolidUserRectangle className="w-5 h-5 text-white"/>
                                         <p className='text-[min(1vw)]'>{item?.user?.username}</p>
-                                    </Link>
+                                    </div>
                                 </li>
                                 ))}
                                 <li className={`relative block cursor-pointer rounded-md px-4 py-1`}>

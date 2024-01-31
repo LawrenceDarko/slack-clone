@@ -23,7 +23,7 @@ const WorkspacesCard = () => {
     const controller = new AbortController();
 
     try {
-        const response = await axiosPrivate.get(`http://localhost:8000/api/workspace/all-user-workspaces/${user?.id}`, {
+        const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/all-user-workspaces/${user?.id}`, {
             // headers: {
             //     "Authorization": `Bearer ${auth?.user?.accessToken}`
             // }
@@ -42,6 +42,7 @@ const WorkspacesCard = () => {
     }
 
     const handleOnclick = (workspaceId: any) => {
+        
         router.push(`/client/${workspaceId}`)
     }
 

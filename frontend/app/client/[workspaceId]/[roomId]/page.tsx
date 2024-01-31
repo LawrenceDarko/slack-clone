@@ -4,9 +4,6 @@ import React, { useState, useEffect, useRef } from 'react'
 import { BiSolidUserRectangle } from "react-icons/bi";
 import { IoMdSend } from "react-icons/io";
 import RoomNav from "@/app/components/navbars/RoomNav";
-import TextEditor from "@/app/components/TextEditor";
-import ScrollToView from "@/app/components/ScrollToView";
-import axios from 'axios';
 import { useRouter } from "next/navigation";
 import { useParams } from 'next/navigation';
 import { useAuthContext } from "@/app/context/AuthContext";
@@ -17,6 +14,8 @@ const page = () => {
     const { user } = useAuthContext()
     const [messages, setMessages] = useState([]) as any
     const [newMessage, setNewMessage] = useState("")
+    const [friendInfo, setFriendInfo] = useState() as any
+
     const params = useParams()
     const controller = new AbortController();
     const lastMessageRef = useRef<HTMLDivElement | null>(null);
@@ -24,10 +23,38 @@ const page = () => {
 
 
 
+    const getFriendInfo = async() => { 
+        try {
+            const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/direct-chat/room/${directChatId}`)
+            const roomData = response?.data
+            console.log("ROOM DATA:", roomData)
+            if(roomData?.status === 'success' && user){
+                let friendId
+                if(roomData?.data?.members[0] === user?._id){
+                    friendId = roomData?.data?.members[1]
+                }
+                else{
+                    friendId = roomData?.data?.members[0]
+                }
+
+                console.log("FRIEND ID:", friendId)
+                // Make api call to fetch friend information
+                const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${friendId}`)
+                const responseData = response?.data
+                console.log('FRIEND DATA:', responseData)
+                if(responseData?.status === 'success'){
+                    setFriendInfo(responseData?.data)
+                }
+            }
+        } catch (error) {
+            console.log("ERROR GETTING FRIEND DATA", error)
+        }
+    }
+
     const getAllMessagesBelongingToAChat = async() => {
 
         try {
-            const response = await axiosPrivate.get(`http://localhost:8000/api/direct-chat/${directChatId}`, {
+            const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/direct-chat/${directChatId}`, {
             withCredentials: true,
             signal: controller.signal
         })
@@ -41,6 +68,7 @@ const page = () => {
         // controller.abort()
     }
 
+
     const sendMessagge = async(e: any) => {
         e.preventDefault()
         const data = {
@@ -53,7 +81,7 @@ const page = () => {
         console.log(data)
 
         try {
-            const response = await axiosPrivate.post(`http://localhost:8000/api/direct-chat/message`, data, {
+            const response = await axiosPrivate.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/direct-chat/message`, data, {
             withCredentials: true,
             // signal: controller.signal
         })
@@ -75,13 +103,14 @@ const page = () => {
 
     useEffect(() => {
         getAllMessagesBelongingToAChat()
-    }, [])
+        getFriendInfo()
+    }, [user])
     
     
 
     return (
         <div className='relative w-full h-screen'>
-            <RoomNav user={messages?.username}/>
+            <RoomNav user={friendInfo?.username}/>
             <section className="flex flex-col flex-1 w-full h-full overflow-x-hidden overflow-y-auto">
                 <section className="w-full h-full gap-3 pb-10 overflow-y-auto pt-72">
                     <div className="flex items-center">
@@ -89,7 +118,7 @@ const page = () => {
                         <h1 className="font-semibold">{messages?.username}</h1>
                     </div>
                     <div className="px-3">
-                        <p>{`This conversation is just between @${messages?.username}. and you. Check out their profile to learn more about them.`}</p>
+                        <p>{`This conversation is just between @${friendInfo?.username}. and you. Check out their profile to learn more about them.`}</p>
                     </div>
                     <div className="flex px-3">
                         <div className="flex px-3 py-2 text-sm hover:bg-[#F8F8F8] border border-gray-400 rounded-[5px]">
