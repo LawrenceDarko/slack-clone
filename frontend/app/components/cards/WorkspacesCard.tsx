@@ -42,7 +42,6 @@ const WorkspacesCard = () => {
     }
 
     const handleOnclick = (workspaceId: any) => {
-        
         router.push(`/client/${workspaceId}`)
     }
 

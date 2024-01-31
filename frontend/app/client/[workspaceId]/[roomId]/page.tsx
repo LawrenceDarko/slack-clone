@@ -19,15 +19,17 @@ const page = () => {
     const params = useParams()
     const controller = new AbortController();
     const lastMessageRef = useRef<HTMLDivElement | null>(null);
-    const directChatId = params.roomId
+    const directChatIdOrChannelId = params.roomId as any
+
+    // console.log("ID:", typeof(directChatIdOrChannelId))
 
 
 
     const getFriendInfo = async() => { 
         try {
-            const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/direct-chat/room/${directChatId}`)
+            const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/direct-chat/room/${directChatIdOrChannelId}`)
             const roomData = response?.data
-            console.log("ROOM DATA:", roomData)
+            // console.log("ROOM DATA:", roomData)
             if(roomData?.status === 'success' && user){
                 let friendId
                 if(roomData?.data?.members[0] === user?._id){
@@ -37,11 +39,11 @@ const page = () => {
                     friendId = roomData?.data?.members[0]
                 }
 
-                console.log("FRIEND ID:", friendId)
+                // console.log("FRIEND ID:", friendId)
                 // Make api call to fetch friend information
                 const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${friendId}`)
                 const responseData = response?.data
-                console.log('FRIEND DATA:', responseData)
+                // console.log('FRIEND DATA:', responseData)
                 if(responseData?.status === 'success'){
                     setFriendInfo(responseData?.data)
                 }
@@ -54,7 +56,24 @@ const page = () => {
     const getAllMessagesBelongingToAChat = async() => {
 
         try {
-            const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/direct-chat/${directChatId}`, {
+            const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/direct-chat/${directChatIdOrChannelId}`, {
+            withCredentials: true,
+            signal: controller.signal
+        })
+        const messagesData = response?.data
+        console.log(messagesData)
+        setMessages(messagesData)
+        } catch (error) {
+            console.log(error)
+        }
+        
+        // controller.abort()
+    }
+
+    const getAllMessagesBelongingToAChannel = async() => {
+
+        try {
+            const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/channels/${directChatIdOrChannelId}`, {
             withCredentials: true,
             signal: controller.signal
         })
@@ -69,30 +88,43 @@ const page = () => {
     }
 
 
-    const sendMessagge = async(e: any) => {
-        e.preventDefault()
+    const sendMessage = async (e: any) => {
+        e.preventDefault();
+    
         const data = {
             sender_id: user.id,
-            direct_chat_id: directChatId,
+            direct_chat_id: directChatIdOrChannelId,
             message_body: newMessage,
             username: user.username
-        }
-
-        console.log(data)
-
+        };
+    
+        console.log(data);
+    
         try {
-            const response = await axiosPrivate.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/direct-chat/message`, data, {
-            withCredentials: true,
-            // signal: controller.signal
-        })
-        const messagesData = response?.data
-        await setMessages((prev: any)=>[...prev, messagesData])
-        setNewMessage('')
-        console.log(messagesData)
+            let endpoint;
+    
+            if (directChatIdOrChannelId.startsWith('DC')) {
+                // If the directChatIdOrChannelId starts with 'DC'
+                endpoint = `${process.env.NEXT_PUBLIC_BACKEND_URL}/direct-chat/message`;
+            } else if (directChatIdOrChannelId.startsWith('CH')) {
+                // If the directChatIdOrChannelId starts with 'CH'
+                endpoint = `${process.env.NEXT_PUBLIC_BACKEND_URL}/channels/message`;
+            } else {
+                // Handle other cases if needed
+                console.error('Invalid directChatIdOrChannelId format');
+                return;
+            }
+    
+            const response = await axiosPrivate.post(endpoint, data);
+    
+            const messagesData = response?.data;
+            await setMessages((prev: any) => [...prev, messagesData]);
+            setNewMessage('');
+            console.log(messagesData);
         } catch (error) {
-            console.log(error)
+            console.error(error);
         }
-    }
+    };
 
     useEffect(() => {
         if (lastMessageRef.current) {
@@ -102,8 +134,14 @@ const page = () => {
 
 
     useEffect(() => {
-        getAllMessagesBelongingToAChat()
-        getFriendInfo()
+        // if the first two letters of the directChatIdOrChannelId are DC, then get messages for chat and if it s CH then get for channels
+        if(directChatIdOrChannelId.slice(0,2) === 'DC'){
+            getAllMessagesBelongingToAChat()
+            getFriendInfo()
+        } else if(directChatIdOrChannelId.slice(0,2) === 'CH'){
+            getAllMessagesBelongingToAChannel()
+        }
+        
     }, [user])
     
     
@@ -147,7 +185,7 @@ const page = () => {
                     {/* <TextEditor /> */}
                     <form action="" className='flex w-full h-full p-2 border'>
                         <input className='w-full h-full outline-none' value={newMessage} onChange={(e: any)=>setNewMessage(e.target.value)}/>
-                        <button type='submit' onClick={sendMessagge}>
+                        <button type='submit' onClick={sendMessage}>
                             <IoMdSend className="text-2xl text-green-800"/>
                         </button>
                     </form>

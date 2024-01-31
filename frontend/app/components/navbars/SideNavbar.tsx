@@ -109,10 +109,14 @@ const SideNavbar = () => {
                 await setConversationObj(chatResponseData)
             }
             // redirect user to chats page
-            router.push(`/client/${workspaceId}/${responseData._id}`)
+            router.push(`/client/${workspaceId}/${responseData.space_id}`)
         } catch (error) {
             console.log("GETTING CONVERSATION ERROR",error)
         }
+    }
+
+    const handleChannelClick = (space_id: string) => { 
+        router.push(`/client/${workspaceId}/${space_id}`)
     }
 
 
@@ -191,7 +195,7 @@ const SideNavbar = () => {
                         <div className={`px-1 ${channelDropdownState? 'block' : 'hidden'}`}>
                             <ul className="flex flex-col items-stretch">
                                 {channelList?.map((item: any, index: number) => (
-                                <li key={index} className={`relative block cursor-pointer ${pathname === item.href ? 'bg-[#1164A3]' : ''} hover:bg-[#4D2A51] rounded-md px-4 py-1`}>
+                                <li onClick={()=>handleChannelClick(item.space_id)} key={index} className={`relative block cursor-pointer ${pathname === item.href ? 'bg-[#1164A3]' : ''} hover:bg-[#4D2A51] rounded-md px-4 py-1`}>
                                     <div className={`flex gap-3 items-center text-[#B5A6B7] capitalize ${pathname === item.href ? "text-white hover:text-lightBlue-600" : "text-blueGray-700 hover:text-blueGray-500"}`}>
                                         <p>#</p>
                                         <p className='text-[min(1vw)]'>{item.name}</p>
