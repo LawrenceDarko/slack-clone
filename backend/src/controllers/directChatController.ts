@@ -45,7 +45,7 @@ const getADirectChatObj = async(req: Request, res: Response) => {
 const getADirectChatObjUsingRoomId = async(req: Request, res: Response) => {
     const {directId} = req.params
     // console.log(directId)
-    const directChatObj = await DirectChat.findOne({_id: directId})
+    const directChatObj = await DirectChat.findOne({space_id: directId})
 
     try {
         res.status(200).json({status: 'success', data: directChatObj})
