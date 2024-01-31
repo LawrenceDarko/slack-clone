@@ -62,7 +62,7 @@ const createChannelMessage = async(req: Request, res: Response) => {
 
 const getChannelMessages = async(req: Request, res: Response) => { 
     const { channelId } = req.params
-    const allChannelMessage = await ChannelMessage.find({channel_id: channelId})
+    const allChannelMessage = await ChannelMessage.find({direct_chat_id: channelId})
 
     try {
         res.status(200).json(allChannelMessage);
