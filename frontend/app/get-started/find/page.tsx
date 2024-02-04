@@ -9,11 +9,14 @@ import { useAuthContext } from '@/app/context/AuthContext';
 import { cookies } from 'next/headers';
 import useRefreshToken from '@/app/hooks/useRefreshToken';
 import { RiLoader4Fill } from 'react-icons/ri';
+import CustomInput from '@/app/components/CustomInput';
+import { useForm, FieldValues } from 'react-hook-form';
+import Link from 'next/link';
 
 const Page = () => {
-    const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false)
-    const [password, setPassword] = useState('');
+    const [error, setError] = useState('')
+    const {control, handleSubmit, formState:{errors}} = useForm<FieldValues>()
     const router = useRouter()
     const { dispatch } = useAuthContext()
 
@@ -22,25 +25,24 @@ const Page = () => {
 
     // console.log(user)
 
-    const handleFormSubmit = async (e: any) => {
-        e.preventDefault();
+    const handleFormSubmit = async (data: FieldValues) => {
             // "Authorization": `Bearer ${Cookies.get('refreshToken')}`
-        const loginData = { email, password }
         try {
             setLoading(true)
-            const response = await axios.post('http://localhost:8000/api/users/login', loginData, {
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/login`, data, {
                 withCredentials: true
             })
-            const data = response?.data;
-            console.log(data?.data);
+            const resData = response?.data;
+            console.log(resData?.data);
             
-            if(data?.status === 'success'){
-                const userdata = localStorage.setItem('userData', JSON.stringify(data.data))
-                dispatch({type: 'LOGIN', payload: data.data})
+            if(resData?.status === 'success'){
+                const userdata = localStorage.setItem('userData', JSON.stringify(resData.data))
+                dispatch({type: 'LOGIN', payload: resData.data})
                 router.push('/get-started/landing')
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error occurred while fetching data:', error);
+            setError(error.response.data)
         } finally {
             setLoading(false)
         }
@@ -50,38 +52,32 @@ const Page = () => {
 
 return (
     <form
-        onSubmit={handleFormSubmit}
+        onSubmit={handleSubmit(handleFormSubmit)}
         className="flex items-center justify-center w-full h-screen overflow-x-hidden overflow-y-auto"
     >
-    <div className="flex-col w-[500px] flex justify-center items-center gap-4">
+    <div className="flex flex-col items-center justify-center w-full gap-3 p-4 pb-20">
         <div className="w-40 h-16">
-        <img src="/images/logo.png" className="object-contain" alt="Logo" />
+            <img src="/images/logo.png" className="object-contain" alt="Logo" />
         </div>
-        <h1 className="text-4xl font-extrabold tracking-wide">Let’s find your team</h1>
-        <p className="font-medium tracking-tighter text-md">We suggest using the email address you use at work.</p>
-        <div className="flex flex-col items-center justify-center w-full gap-5">
-        <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-[75%] outline-none border border-gray-400 h-10 flex items-center justify-center p-2 rounded-sm"
-            placeholder="name@work-email.com"
-        />
-        <input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-[75%] outline-none border border-gray-400 h-10 flex items-center justify-center p-2 rounded-sm"
-            placeholder="password"
-        />
+        <div className="flex flex-col items-center">
+            <h1 className="text-4xl font-extrabold tracking-wide">Let’s find your team</h1>
+            <p className="font-medium tracking-tighter text-md">We suggest using the email address you use at work.</p>
         </div>
-        <button
-            // onClick={handleFormSubmit}
-            type="submit"
-            className="mt-5 cursor-pointer flex rounded-sm text-white bg-[#3f1b3f] justify-center items-center h-10 w-[75%]"
-        >
-        {loading? <RiLoader4Fill className="text-white animate-spin"/> : "Continue With Email"}
-        </button>
+        
+        <div className="flex flex-col items-center w-full gap-4 px-5 md:w-2/4 lg:w-1/3">
+            <CustomInput name='email' placeholder='Enter email' control={control} customStyles="py-3 focus:border-blue-500 focus:bg-[#f9fafc]" type='email' rules={{ required: 'Email is required' }} />
+            <CustomInput name='password' placeholder='Enter password' control={control} customStyles="py-3 focus:border-blue-500 focus:bg-[#f9fafc]" type='password' rules={{ required: 'Password is required' }} />
+            
+            {error && <p className="pt-5 italic text-red-500">{error}</p>}
+            <button
+                className="mt-2 cursor-pointer flex rounded text-white bg-[#3f1b3f] justify-center items-center h-11 w-full"
+            >
+                {loading? <RiLoader4Fill size={22} className="text-white animate-spin"/> : "Continue"}
+            </button>
+
+            <p>Don't have an account? <Link href="/get-started/signup" className='text-blue-500'>register here</Link></p>
+        </div>
     </div>
-    {/* <button onClick={refresh}>Refresh</button> */}
     </form>
 );
 };
