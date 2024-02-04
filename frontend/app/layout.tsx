@@ -7,6 +7,7 @@ import { cookies } from 'next/headers';
 import LoginRedirect from './components/LoginRedirect';
 import { headers } from "next/headers";
 import { AuthContextProvider } from './context/AuthContext';
+import InviteModal from './components/Modals/InviteModal';
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -40,7 +41,10 @@ export default function RootLayout({
     <AuthContextProvider>
       <GeneralContextProvider>
         <html lang="en">
-          <body className={inter.className}>{children}</body>
+          <body className={inter.className}>
+            <InviteModal />
+            {children}
+          </body>
         </html>
       </GeneralContextProvider>
     </AuthContextProvider>
