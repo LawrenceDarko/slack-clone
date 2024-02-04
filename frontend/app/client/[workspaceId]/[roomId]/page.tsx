@@ -4,7 +4,6 @@ import React, { useState, useEffect, useRef } from 'react'
 import { BiSolidUserRectangle } from "react-icons/bi";
 import { IoMdSend } from "react-icons/io";
 import RoomNav from "@/app/components/navbars/RoomNav";
-import { useRouter } from "next/navigation";
 import { useParams } from 'next/navigation';
 import { useAuthContext } from "@/app/context/AuthContext";
 import { axiosPrivate } from '@/app/hooks/axios';
@@ -15,11 +14,13 @@ const page = () => {
     const [messages, setMessages] = useState([]) as any
     const [newMessage, setNewMessage] = useState("")
     const [friendInfo, setFriendInfo] = useState() as any
+    const [workspaceInfo, setWorkspaceInfo] = useState<any>(null)
 
     const params = useParams()
     const controller = new AbortController();
     const lastMessageRef = useRef<HTMLDivElement | null>(null);
     const directChatIdOrChannelId = params.roomId as any
+    const workspaceId = params.workspaceId
 
     // console.log("ID:", typeof(directChatIdOrChannelId))
 
@@ -43,7 +44,7 @@ const page = () => {
                 // Make api call to fetch friend information
                 const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${friendId}`)
                 const responseData = response?.data
-                // console.log('FRIEND DATA:', responseData)
+                console.log('FRIEND DATA:', responseData)
                 if(responseData?.status === 'success'){
                     setFriendInfo(responseData?.data)
                 }
@@ -66,14 +67,13 @@ const page = () => {
         } catch (error) {
             console.log(error)
         }
-        
         // controller.abort()
     }
 
     const getAllMessagesBelongingToAChannel = async() => {
 
         try {
-            const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/channels/${directChatIdOrChannelId}`, {
+            const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/channels/messages/${directChatIdOrChannelId}`, {
             withCredentials: true,
             signal: controller.signal
         })
@@ -116,7 +116,7 @@ const page = () => {
             }
     
             const response = await axiosPrivate.post(endpoint, data);
-    
+            
             const messagesData = response?.data;
             await setMessages((prev: any) => [...prev, messagesData]);
             setNewMessage('');
@@ -126,11 +126,26 @@ const page = () => {
         }
     };
 
+    const getChannelInfo = async() => {
+        try {
+            const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/channels/${directChatIdOrChannelId}`)
+            const responseData = response?.data
+            setWorkspaceInfo(responseData)
+        } catch (error) {
+            console.log("ERROR GETTING WORKSPACE INFO", error)
+        }
+    }
+
     useEffect(() => {
         if (lastMessageRef.current) {
             lastMessageRef.current.scrollIntoView({ behavior: "smooth" });
         }
     }, [messages]);
+
+    useEffect(() => {
+        getChannelInfo()
+    }, [])
+    
 
 
     useEffect(() => {
@@ -148,12 +163,14 @@ const page = () => {
 
     return (
         <div className='relative w-full h-screen'>
-            <RoomNav user={friendInfo?.username}/>
+            <RoomNav user={friendInfo?.username} isChannel={directChatIdOrChannelId.startsWith('CH')} channelName={workspaceInfo?.data?.name}/>
             <section className="flex flex-col flex-1 w-full h-full overflow-x-hidden overflow-y-auto">
                 <section className="w-full h-full gap-3 pb-10 overflow-y-auto pt-72">
                     <div className="flex items-center">
-                        <BiSolidUserRectangle className='text-[#007A5A] text-9xl'/>
-                        <h1 className="font-semibold">{messages?.username}</h1>
+                        {directChatIdOrChannelId.startsWith('CH') ?
+                            <p className={`${!workspaceInfo?.data?.name && "invisible"} p-3 text-2xl font-semibold`}># {workspaceInfo?.data?.name}</p>
+                            :  <BiSolidUserRectangle className='text-[#007A5A] text-9xl'/>}
+                        {/* <h1 className="font-semibold">{messages?.username}</h1> */}
                     </div>
                     <div className="px-3">
                         <p>{`This conversation is just between @${friendInfo?.username}. and you. Check out their profile to learn more about them.`}</p>
@@ -163,14 +180,10 @@ const page = () => {
                             <p>View Profile</p>
                         </div>
                     </div>
-                    {/* {messages && <section>
-                        {messages?.map((message: any, i: any)=> (
-                            <p key={i}>{message?.message_body}</p>
-                        ))}
-                    </section>} */}
+
                     {messages && <section className='flex flex-col w-full h-full gap-3 p-3 cursor-pointer'>
                         {messages?.map((message: any, i: any)=> (
-                        <div ref={i === messages.length - 1 ? lastMessageRef : null} key={i} className='flex items-start justify-start gap-2'>
+                        <div ref={i === messages.length - 1 ? lastMessageRef : null} key={i} className='flex items-start justify-start gap-2 p-2 hover:bg-gray-50'>
                             <div className='w-12 h-12 rounded-md'>
                                 <BiSolidUserRectangle className="w-full h-full text-gray-200"/>
                             </div>
@@ -185,8 +198,8 @@ const page = () => {
                     {/* <TextEditor /> */}
                     <form action="" className='flex w-full h-full p-2 border'>
                         <input className='w-full h-full outline-none' value={newMessage} onChange={(e: any)=>setNewMessage(e.target.value)}/>
-                        <button type='submit' onClick={sendMessage}>
-                            <IoMdSend className="text-2xl text-green-800"/>
+                        <button type='submit' disabled={!newMessage}  onClick={sendMessage}>
+                            <IoMdSend disabled={!newMessage} className={`${!newMessage && 'bg-gray-400 cursor-not-allowed'} text-2xl text-green-800`}/>
                         </button>
                     </form>
                 </section>
