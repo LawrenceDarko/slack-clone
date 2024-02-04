@@ -72,7 +72,7 @@ return (
             <button
                 className="mt-2 cursor-pointer flex rounded text-white bg-[#3f1b3f] justify-center items-center h-11 w-full"
             >
-                {loading? <RiLoader4Fill size={22} className="text-white animate-spin"/> : "Continue"}
+                {loading? <RiLoader4Fill size={22} className="text-white animate-spin"/> : "Continue with Email"}
             </button>
 
             <p>Don't have an account? <Link href="/get-started/signup" className='text-blue-500'>register here</Link></p>
