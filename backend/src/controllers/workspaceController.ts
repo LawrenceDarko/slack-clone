@@ -50,4 +50,15 @@ const fetchAllUsersForAWorkspace = async(req: Request, res: Response) => {
     }
 }
 
-export {createWorkspace, createUserWorkspace, fetchAllWorkspaceForAUser, fetchAllUsersForAWorkspace}
+// Write a controller to find one workspace with an id
+const findOneWorkspaceById = async(req: Request, res: Response) => {
+    const {workspaceId} = req.params;
+    const workspace = await Workspace.findById(workspaceId)
+    try {
+        res.status(200).json({status: 'success', data: workspace})
+    } catch (error) {
+        res.status(400).json(error)
+    }
+}
+
+export {createWorkspace, findOneWorkspaceById, createUserWorkspace, fetchAllWorkspaceForAUser, fetchAllUsersForAWorkspace}
