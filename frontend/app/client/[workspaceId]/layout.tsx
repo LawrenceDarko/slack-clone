@@ -1,4 +1,4 @@
-import Modal from "@/app/components/Modal"
+import Modal from "@/app/components/Modals/Modal"
 import SideNavbar from "@/app/components/navbars/SideNavbar"
 import TopNavbar from "@/app/components/navbars/TopNavbar"
 
