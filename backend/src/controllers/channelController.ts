@@ -48,6 +48,18 @@ const getWorkspaceChannels = async(req: Request, res: Response) => {
     }
 }
 
+const getASingleChannelById = async(req: Request, res: Response) => {
+    const {channelId} = req.params
+    // console.log("CHANNEL BY ID")
+    const singleChannel = await Channel.findOne({space_id: channelId})
+
+    try {
+        res.status(200).json({status: 'success', data: singleChannel})
+    } catch (error) {
+        res.status(400).json(error)
+    }
+}
+
 const createChannelMessage = async(req: Request, res: Response) => { 
     const newChannelMessage = new ChannelMessage(req.body)
 
@@ -74,4 +86,10 @@ const getChannelMessages = async(req: Request, res: Response) => {
 
 
 
-export { createChannel, getWorkspaceChannels, createChannelMessage, getChannelMessages }
+export { 
+        createChannel, 
+        getWorkspaceChannels, 
+        createChannelMessage, 
+        getChannelMessages,
+        getASingleChannelById
+    }
