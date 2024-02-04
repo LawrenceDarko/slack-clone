@@ -13,6 +13,8 @@ interface GeneralContextType {
     channelList: any;
     getWorkspaceUsers: () => void;
     worksapceUsers: any;
+    showInviteModal: boolean;
+    setShowInviteModal: (value: boolean) => void;
     
 }
 
@@ -29,6 +31,7 @@ export const GeneralContextProvider: React.FC<GeneralContextProviderProps> = ({ 
     const { user } = useAuthContext()
 
     const [showModal, setShowModal] = useState(false);
+    const [showInviteModal, setShowInviteModal] = useState<any>(false)
     const [channelList, setChannelList] = useState<any>([])
     const [worksapceUsers, setWorksapceUsers] = useState([])
     const [friendInfo, setFriendInfo] = useState()
@@ -79,7 +82,9 @@ export const GeneralContextProvider: React.FC<GeneralContextProviderProps> = ({ 
             getWorkspaceChannels,
             channelList,
             getWorkspaceUsers,
-            worksapceUsers
+            worksapceUsers,
+            showInviteModal,
+            setShowInviteModal
         }}>
         {children}
         </GeneralContext.Provider>
