@@ -3,13 +3,21 @@ import { VscNewFile } from "react-icons/vsc";
 import { IoIosArrowDown } from "react-icons/io";
 import { AiOutlinePlus } from "react-icons/ai";
 
-const RoomNav = ({user}:{user: string}) => {
+interface RoomNavProps {
+    user: string;
+    isChannel?: boolean;
+    channelName?: string;
+}
+
+const RoomNav: React.FC<RoomNavProps> = ({user, isChannel, channelName}) => {
     return (
         <div className='absolute top-[44px] z-10 w-full bg-white'>
             <section className='flex items-center justify-between w-full p-3 border-b'>
                 <div className="flex items-center gap-1 cursor-pointer hover:bg-[#F6F6F6] rounded-md">
-                    <BiSolidUserRectangle className='text-4xl text-[#007A5A]'/>
-                    <h1 className="font-semibold">{user}</h1>
+                    {isChannel ? "#" : <BiSolidUserRectangle className='text-4xl text-[#007A5A]'/>}
+                    {isChannel ? 
+                    <h1 className="font-semibold">{channelName}</h1>
+                    : <h1 className="font-semibold">{user}</h1>}
                     <IoIosArrowDown />
                 </div>
                 <div>
