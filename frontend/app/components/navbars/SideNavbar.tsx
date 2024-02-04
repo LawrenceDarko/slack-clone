@@ -53,11 +53,13 @@ const SideNavbar = () => {
             getWorkspaceChannels, 
             channelList,
             getWorkspaceUsers,
-            worksapceUsers 
+            worksapceUsers,
+            setShowInviteModal
         } = useGeneralContext()
     const [channelDropdownState, setChannelDropdownState] = useState(true)
     const [directMessagesState, setDirectMessagesState] = useState(true)
     const [conversationObj, setConversationObj] = useState(null) as any
+    const [workspaceInfo, setWorkspaceInfo] = useState<any>(null)
     const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false)
 
@@ -119,11 +121,26 @@ const SideNavbar = () => {
         router.push(`/client/${workspaceId}/${space_id}`)
     }
 
+    const getWorkspaceInfo = async() => {
+        try {
+            const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspaceId}`)
+            const responseData = response?.data
+            setWorkspaceInfo(responseData)
+        } catch (error) {
+            console.log("ERROR GETTING WORKSPACE INFO", error)
+        }
+    }
+
 
     useEffect(() => {
         getWorkspaceUsers()
         getWorkspaceChannels()
     }, [user])
+
+    useEffect(() => {
+        getWorkspaceInfo()
+    }, [])
+    
     
     
     
@@ -131,10 +148,10 @@ const SideNavbar = () => {
         <div className='hidden top-[44px] left-0 bottom-0 border-t-[1px] border-[#522653] min-[212px]:block md:fixed w-[20vw] bg-[#3F0E40] h-[93.8vh] overflow-auto'>
             <div className='flex flex-col w-full h-full'>
                 <section className='flex flex-col gap-4 px-5 pt-2'>
-                    <div className='flex items-center justify-between'>
+                    <div className={`${!workspaceInfo?.data?.name && 'hidden'} flex items-center justify-between`}>
                         <div className='relative w-[500px]'>
-                        <div onClick={toggleOpen} className='flex items-center gap-2 cursor-pointer'>
-                            <h1 className='font-bold text-white'>Computing Physics</h1>
+                        <div onClick={toggleOpen} className={`flex items-center gap-2 cursor-pointer`}>
+                            <h1 className='font-bold text-white'>{workspaceInfo?.data?.name}</h1>
                             <IoIosArrowDown className='text-white'/>
                         </div>
                         {isOpen && (
@@ -142,6 +159,7 @@ const SideNavbar = () => {
                                 <div className="flex flex-col cursor-pointer">
                                     <>
                                         <MenuItem onClick={()=>{
+                                            // setShowInviteModal(true)
                                             toggleOpen()
                                         }} 
                                         label='New Workspace
@@ -151,7 +169,14 @@ const SideNavbar = () => {
                                             setShowModal(true)
                                             toggleOpen()
                                         }} 
-                                        label='Create Channel'/>
+                                        label='Create Channel'
+                                        />
+                                        <MenuItem onClick={()=>{
+                                            setShowInviteModal(true)
+                                            // toggleOpen()
+                                        }} 
+                                        label='Invite users'
+                                        />
                                     </>
                                 </div>
                             </div>
