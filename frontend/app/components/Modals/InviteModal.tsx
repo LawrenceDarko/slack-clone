@@ -51,7 +51,7 @@ const InviteModal = () => {
 
     return (
         <div className={`${showInviteModal === false ? 'hidden' : ''} fixed z-50 flex items-center inset-0 justify-center w-full h-full bg-black backdrop-blur-md bg-opacity-20`}>
-            <div className="w-[448px] bg-white rounded-md p-8">
+            <div className="w-[448px] bg-white dark:bg-[var(--dark-theme-bg-color)] rounded-md p-8">
                 <div className="flex justify-between w-full">
                     <h2 className="mb-4 text-lg font-semibold">Invite Users</h2>
                     <IoIosClose className="cursor-pointer" onClick={()=>setShowInviteModal(false)} size={20}/>
@@ -65,7 +65,7 @@ const InviteModal = () => {
                         placeholder="johndoe@example.com"
                         value={inviteEmail}
                         onChange={(e) => setInviteEmail(e.target.value)}
-                        className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:border-blue-500`}
+                        className={`w-full border rounded-md px-3 py-2 focus:outline-none focus:border-blue-500 dark:bg-[#222529]`}
                     />
                 </div>
                 
