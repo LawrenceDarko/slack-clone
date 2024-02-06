@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation';
 import useAxiosPrivate from '@/app/hooks/useAxiosPrivate';
 import MenuItem from './MenuItem';
 import { useGeneralContext } from '@/app/context/GeneralContext';
+import Logout from '../Logout';
 
 interface LinkProp {
     href: string;
@@ -123,6 +124,7 @@ const SideNavbar = () => {
 
     const getWorkspaceInfo = async() => {
         try {
+            // if(!workspaceId) return;
             const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/${workspaceId}`)
             const responseData = response?.data
             setWorkspaceInfo(responseData)
@@ -145,42 +147,42 @@ const SideNavbar = () => {
     
     
     return (
-        <div className='hidden top-[44px] left-0 bottom-0 border-t-[1px] border-[#522653] min-[212px]:block md:fixed w-[20vw] bg-[#3F0E40] h-[93.8vh] overflow-auto'>
-            <div className='flex flex-col w-full h-full'>
+        <div className='hidden dark:bg-[var(--dark-theme-bg-color)] top-[44px] left-0 bottom-0 border-t-[1px] border-[#522653] dark:border-[#35373B] min-[212px]:block fixed w-[20vw] bg-[#3B1D3F] h-[100vh] overflow-auto'>
+            <div className='relative flex flex-col w-full h-full'>
                 <section className='flex flex-col gap-4 px-5 pt-2'>
                     <div className={`${!workspaceInfo?.data?.name && 'hidden'} flex items-center justify-between`}>
                         <div className='relative w-[500px]'>
-                        <div onClick={toggleOpen} className={`flex items-center gap-2 cursor-pointer`}>
-                            <h1 className='font-bold text-white'>{workspaceInfo?.data?.name}</h1>
-                            <IoIosArrowDown className='text-white'/>
-                        </div>
-                        {isOpen && (
-                            <div className='absolute z-50 overflow-hidden text-sm bg-white rounded-md shadow-md w-60 left-5 top-7'>
-                                <div className="flex flex-col cursor-pointer">
-                                    <>
-                                        <MenuItem onClick={()=>{
-                                            // setShowInviteModal(true)
-                                            toggleOpen()
-                                        }} 
-                                        label='New Workspace
-                                        '/>
-                                        <hr/>
-                                        <MenuItem onClick={()=>{
-                                            setShowModal(true)
-                                            toggleOpen()
-                                        }} 
-                                        label='Create Channel'
-                                        />
-                                        <MenuItem onClick={()=>{
-                                            setShowInviteModal(true)
-                                            // toggleOpen()
-                                        }} 
-                                        label='Invite users'
-                                        />
-                                    </>
-                                </div>
+                            <div onClick={toggleOpen} className={`flex items-center gap-2 cursor-pointer`}>
+                                <h1 className='font-bold text-white'>{workspaceInfo?.data?.name}</h1>
+                                <IoIosArrowDown className='text-white'/>
                             </div>
-                        )}
+                            {isOpen && (
+                                <div className='absolute z-50 overflow-hidden text-sm bg-white rounded-md shadow-md w-60 left-5 top-7'>
+                                    <div className="flex flex-col cursor-pointer">
+                                        <>
+                                            <MenuItem onClick={()=>{
+                                                // setShowInviteModal(true)
+                                                toggleOpen()
+                                            }} 
+                                            label='New Workspace
+                                            '/>
+                                            <hr/>
+                                            <MenuItem onClick={()=>{
+                                                setShowModal(true)
+                                                toggleOpen()
+                                            }} 
+                                            label='Create Channel'
+                                            />
+                                            <MenuItem onClick={()=>{
+                                                setShowInviteModal(true)
+                                                // toggleOpen()
+                                            }} 
+                                            label='Invite users'
+                                            />
+                                        </>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         <div className='flex items-center justify-center p-3 bg-white rounded-full'>
                             <FiEdit className='text-[#3F0E40] text-xl'/>
@@ -188,14 +190,14 @@ const SideNavbar = () => {
                     </div>
                     <div className='flex items-center justify-center w-full gap-2 p-1 border rounded-md'>
                         <PiRocketLaunchLight className='text-white'/>
-                        <p className='text-[12px] font-thin text-white'>Upgrade Plan</p>
+                        <p className='text-[12px] font-light text-white'>Upgrade Plan</p>
                     </div>
                 </section>
-                <hr className="my-3 text-[1px] border-[#522653] md:min-w-full"/>
+                <hr className="my-3 text-[1px] border-[#522653] dark:border-[#35373B] md:min-w-full"/>
                 <section className='flex flex-col px-2'>
                     <ul className="flex flex-col items-stretch">
-                        {slackSideLinks.map((item, index) => (
-                        <li key={index} className="relative block cursor-pointer hover:bg-[#4D2A51] rounded-md px-3 py-1">
+                        {slackSideLinks?.map((item, index) => (
+                        <li key={index} className="relative block cursor-pointer hover:bg-[#4D2A51] dark:hover:bg-[#323538] rounded-md px-3 py-1">
                             <div className={`flex gap-3 items-center text-[#B5A6B7] capitalize ${pathname === item.href ? "text-lightBlue-500 hover:text-lightBlue-600" : "text-blueGray-700 hover:text-blueGray-500"}`}>
                                 <item.IconComponent className='text-[1vw]'/>
                                 <p className='text-[min(1vw)]'>{item.text}</p>
@@ -204,37 +206,37 @@ const SideNavbar = () => {
                         ))}
                     </ul>
                 </section>
-                <hr className="my-3 text-[1px] border-[#522653] md:min-w-full"/>
+                <hr className="my-3 text-[1px] border-[#522653] dark:border-[#35373B] md:min-w-full"/>
                 <section className='px-1'>
-                        <div className='flex px-3 text-[#B5A6B7] items-center'>
-                            <div className='p-1 rounded-md hover:bg-[#4D2A51] cursor-pointer'>
-                                <div onClick={()=>handleDropdowToggle()}>
-                                    {channelDropdownState? <RiArrowDownSFill className='text-white'/> : <RiArrowRightSFill className='text-white'/>}
+                    <div className='flex px-3 text-[#B5A6B7] items-center'>
+                        <div className='p-1 rounded-md hover:bg-[#4D2A51] dark:hover:bg-[#323538] cursor-pointer'>
+                            <div onClick={()=>handleDropdowToggle()}>
+                                {channelDropdownState? <RiArrowDownSFill className='text-white'/> : <RiArrowRightSFill className='text-white'/>}
+                            </div>
+                        </div>
+                        <div className='flex items-center gap-1 hover:bg-[#4D2A51] dark:hover:bg-[#323538] pt-full px-1 rounded-md cursor-pointer'>
+                            <p>Channels</p>
+                            <IoIosArrowDown className='text-transparent hover:text-white'/>
+                        </div>
+                    </div>
+                    <div className={`px-1 ${channelDropdownState? 'block' : 'hidden'}`}>
+                        <ul className="flex flex-col items-stretch">
+                            {channelList?.map((item: any, index: number) => (
+                            <li onClick={()=>handleChannelClick(item.space_id)} key={index} className={`relative block cursor-pointer ${pathname === item.href ? 'bg-[#1164A3]' : ''} hover:bg-[#4D2A51] dark:hover:bg-[#323538] rounded-md px-4 py-1`}>
+                                <div className={`flex gap-3 items-center text-[#B5A6B7] ${pathname === item.href ? "text-white hover:text-lightBlue-600" : "text-blueGray-700 hover:text-blueGray-500"}`}>
+                                    <p>#</p>
+                                    <p className='text-[min(1vw)]'>{(item.name).toLowerCase()}</p>
                                 </div>
-                            </div>
-                            <div className='flex items-center gap-1 hover:bg-[#4D2A51] pt-full px-1 rounded-md cursor-pointer'>
-                                <p>Channels</p>
-                                <IoIosArrowDown className='text-transparent hover:text-white'/>
-                            </div>
-                        </div>
-                        <div className={`px-1 ${channelDropdownState? 'block' : 'hidden'}`}>
-                            <ul className="flex flex-col items-stretch">
-                                {channelList?.map((item: any, index: number) => (
-                                <li onClick={()=>handleChannelClick(item.space_id)} key={index} className={`relative block cursor-pointer ${pathname === item.href ? 'bg-[#1164A3]' : ''} hover:bg-[#4D2A51] rounded-md px-4 py-1`}>
-                                    <div className={`flex gap-3 items-center text-[#B5A6B7] capitalize ${pathname === item.href ? "text-white hover:text-lightBlue-600" : "text-blueGray-700 hover:text-blueGray-500"}`}>
-                                        <p>#</p>
-                                        <p className='text-[min(1vw)]'>{item.name}</p>
-                                    </div>
-                                </li>
-                                ))}
-                                <li onClick={()=>setShowModal(true)} className={`relative block cursor-pointer rounded-md px-4 py-1`}>
-                                    <Link href={""} className={`flex gap-3 items-center text-[#B5A6B7] capitalize `}>
-                                        <p>+</p>
-                                        <p className='text-[min(1vw)]'>Add Channel</p>
-                                    </Link>
-                                </li>
-                            </ul>
-                        </div>
+                            </li>
+                            ))}
+                            <li onClick={()=>setShowModal(true)} className={`relative dark:hover:bg-[#323538] block cursor-pointer rounded-md px-4 py-1`}>
+                                <Link href={""} className={`flex gap-3 items-center text-[#B5A6B7] capitalize `}>
+                                    <p>+</p>
+                                    <p className='text-[min(1vw)]'>Add Channel</p>
+                                </Link>
+                            </li>
+                        </ul>
+                    </div>
                 </section>
                 <section className='px-1'>
                         <div className='flex px-3 text-[#B5A6B7] items-center'>
@@ -243,7 +245,7 @@ const SideNavbar = () => {
                                     {directMessagesState? <RiArrowDownSFill className='text-white'/> : <RiArrowRightSFill className='text-white'/>}
                                 </div>
                             </div>
-                            <div className='flex items-center gap-1 hover:bg-[#4D2A51] pt-full px-1 rounded-md cursor-pointer'>
+                            <div className='flex items-center gap-1 dark:hover:bg-[#323538] hover:bg-[#4D2A51] pt-full px-1 rounded-md cursor-pointer'>
                                 <p>Direct Messages</p>
                                 <IoIosArrowDown className='text-transparent hover:text-white'/>
                             </div>
@@ -251,14 +253,14 @@ const SideNavbar = () => {
                         <div className={`px-1 ${directMessagesState? 'block' : 'hidden'}`}>
                             <ul className="flex flex-col items-stretch">
                                 {worksapceUsers?.map((item: any, index: number) => (
-                                <li key={index} onClick={()=>getConversationObj(item?.user?._id)} className={`relative block cursor-pointer hover:bg-[#4D2A51] rounded-md px-3 py-1`}>
+                                <li key={index} onClick={()=>getConversationObj(item?.user?._id)} className={`relative block cursor-pointer hover:bg-[#4D2A51] dark:hover:bg-[#323538] rounded-md px-3 py-1`}>
                                     <div className={`flex gap-2 items-center text-[#B5A6B7] capitalize`}>
                                         <BiSolidUserRectangle className="w-5 h-5 text-white"/>
                                         <p className='text-[min(1vw)]'>{item?.user?.username}</p>
                                     </div>
                                 </li>
                                 ))}
-                                <li className={`relative block cursor-pointer rounded-md px-4 py-1`}>
+                                <li className={`relative block cursor-pointer rounded-md px-4 py-1 dark:hover:bg-[#323538]`}>
                                     <Link href={""} className={`flex gap-3 items-center text-[#B5A6B7] capitalize `}>
                                         <p className='rounded-md'>+</p>
                                         <p className='text-[min(1vw)]'>Add Coworkers</p>
@@ -267,6 +269,7 @@ const SideNavbar = () => {
                             </ul>
                         </div>
                 </section>
+                <Logout />
             </div>
             
         </div>
