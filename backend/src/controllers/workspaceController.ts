@@ -3,10 +3,15 @@ import Workspace from '../models/WorkSpace';
 import UserWorkspace from '../models/UserWorkspace';
 
 const createWorkspace = async(req: Request, res: Response) => {
-    const newWorkspace = new Workspace(req.body)
+
+    const { name, description, created_by } = req.body
+
+    const newWorkspace = new Workspace({name, description, created_by})
     try {
         const savedWorkspace = await newWorkspace.save()
-        res.status(200).json(savedWorkspace)
+
+        await UserWorkspace.create({user: created_by, workspace: savedWorkspace._id})
+        res.status(200).json({status: 'success', data: savedWorkspace, message: 'Workpace created Successfully'})
     } catch (error) {
         res.status(400).json(error)
     }
@@ -23,7 +28,7 @@ const createUserWorkspace = async(req: Request, res: Response) => {
     const newUserWorkspace = await UserWorkspace.create({user, workspace})
     try {
         const savedUserWorkspace = await newUserWorkspace.save()
-        res.status(200).json(savedUserWorkspace)
+        res.status(200).json({status: 'success', data: savedUserWorkspace, message: 'Workspace created Successfully'})
     } catch (error) {
         res.status(400).json(error)
     }
