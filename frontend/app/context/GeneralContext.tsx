@@ -15,6 +15,8 @@ interface GeneralContextType {
     worksapceUsers: any;
     showInviteModal: boolean;
     setShowInviteModal: (value: boolean) => void;
+    showWorkspaceModal: boolean;
+    setShowWorkspaceModal: (value: boolean) => void;
     
 }
 
@@ -32,9 +34,10 @@ export const GeneralContextProvider: React.FC<GeneralContextProviderProps> = ({ 
 
     const [showModal, setShowModal] = useState(false);
     const [showInviteModal, setShowInviteModal] = useState<any>(false)
+    const [showWorkspaceModal, setShowWorkspaceModal] = useState(false)
+
     const [channelList, setChannelList] = useState<any>([])
     const [worksapceUsers, setWorksapceUsers] = useState([])
-    const [friendInfo, setFriendInfo] = useState()
     // console.log(user)
 
     const getWorkspaceChannels = async() => {
@@ -44,9 +47,9 @@ export const GeneralContextProvider: React.FC<GeneralContextProviderProps> = ({ 
             // console.log("WS ID", workspaceId)
             const response = await axiosInstance.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/channels/workspace-channels/${workspaceId}`)
             const responseData = response?.data
-            setChannelList(responseData.data)
+            setChannelList(responseData?.data)
             // getWorkspaceChannels()
-            console.log("CHANNELS:", responseData.data)
+            // console.log("CHANNELS:", responseData?.data)
             }
         } catch (error) {
             console.log(error)
@@ -59,8 +62,8 @@ export const GeneralContextProvider: React.FC<GeneralContextProviderProps> = ({ 
         try {
             const response = await axiosInstance.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/workspace/all-workspace-users/${workspaceId}`)
             const responseData = response?.data
-            console.log(responseData)
-            setWorksapceUsers(responseData.filter((directChatInfo: any) => directChatInfo.user._id !== user?.id))
+            // console.log(responseData)
+            setWorksapceUsers(responseData.filter((directChatInfo: any) => directChatInfo?.user?._id !== user?.id))
             
         } catch (error) {
             console.log(error)
@@ -84,7 +87,9 @@ export const GeneralContextProvider: React.FC<GeneralContextProviderProps> = ({ 
             getWorkspaceUsers,
             worksapceUsers,
             showInviteModal,
-            setShowInviteModal
+            setShowInviteModal,
+            showWorkspaceModal,
+            setShowWorkspaceModal
         }}>
         {children}
         </GeneralContext.Provider>
