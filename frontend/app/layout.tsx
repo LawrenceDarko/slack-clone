@@ -1,6 +1,6 @@
 import './globals.css'
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
+import { Inter, Lato } from 'next/font/google'
 import { GeneralContextProvider } from './context/GeneralContext'
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
@@ -8,8 +8,14 @@ import LoginRedirect from './components/LoginRedirect';
 import { headers } from "next/headers";
 import { AuthContextProvider } from './context/AuthContext';
 import InviteModal from './components/Modals/InviteModal';
+import WorkspaceModal from './components/Modals/WorkspaceModal';
+import { ThemeProvider } from './theme-provider';
 
 const inter = Inter({ subsets: ['latin'] })
+const lato = Lato({
+  subsets: ['latin'],
+  weight: '400'
+})
 
 export const metadata: Metadata = {
   title: 'Slack Clone',
@@ -21,28 +27,13 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-
-  // const cookieStore = cookies()
-  // const user = cookieStore.get('token')
-  // console.log(user)
-
-  // const headersList = headers();
-  // const activePath = headersList.get("/get-started/find");
-
-  // if (activePath === '/get-started/find') {
-  //   return;
-  // }
-
-  // if(!user){
-  //   redirect('/get-started/find')
-  // } 
-
   return (
     <AuthContextProvider>
       <GeneralContextProvider>
         <html lang="en">
-          <body className={inter.className}>
+          <body className={lato.className}>
             <InviteModal />
+            <WorkspaceModal />
             {children}
           </body>
         </html>
