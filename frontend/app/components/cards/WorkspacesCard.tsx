@@ -6,7 +6,7 @@ import { useAuthContext } from '@/app/context/AuthContext'
 import useAxiosPrivate from "@/app/hooks/useAxiosPrivate";
 import { useRouter } from "next/navigation";
 
-const WorkspacesCard = () => {
+const WorkspacesCard = ({ modalState }: {modalState?: any}) => {
 
     const [workpaces, setWorkpaces] = useState() as any
     const { user } = useAuthContext()
@@ -42,17 +42,17 @@ const WorkspacesCard = () => {
     
     useEffect(() => {
         getData()
-    }, [])
+    }, [user, modalState])
 
     return (
         <div className='border flex flex-col h-full rounded-sm shadow-md w-full md:w-[40%]'>
             <div className='p-3 border-b'>
-                <p>Workspaces for darkolawrence@gmail.com</p>
+                <p>Workspaces for {user?.email}</p>
             </div>
             <div className='flex flex-col w-full h-full'>
                 {workpaces?.map((item: any, i: any) => 
-                    <div key={i} onClick={()=>handleOnclick(item.workspace._id)}>
-                        <WorkspaceItem spaceName={item.workspace.name} />
+                    <div key={i} onClick={()=>handleOnclick(item?.workspace?._id)}>
+                        <WorkspaceItem spaceName={item?.workspace?.name} />
                     </div>
                 )}
             </div>
