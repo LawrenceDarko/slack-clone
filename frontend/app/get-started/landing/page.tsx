@@ -1,8 +1,10 @@
+'use client'
+
 import WorkspacesCard from "@/app/components/cards/WorkspacesCard";
+import { useGeneralContext } from "@/app/context/GeneralContext";
 
 const page = () => {
-
-  // const userData = JSON.parse(localStorage.getItem('userData') as any)
+  const { setShowWorkspaceModal, showWorkspaceModal } = useGeneralContext();
   
 
   return (
@@ -20,7 +22,7 @@ const page = () => {
               type="submit"
               className="cursor-pointer flex rounded-md text-white bg-[#611F69] justify-center items-center h-12 w-full"
             >
-              <p className="whitespace-nowrap text-[1vw]">Create a Workspace</p>
+              <p onClick={()=>setShowWorkspaceModal(true)} className="whitespace-nowrap text-[1vw]">Create a Workspace</p>
             </button>
             <div className="flex items-start gap-2">
               <input type="checkbox"/>
@@ -39,7 +41,7 @@ const page = () => {
           <p className="font-bold">Open a workspace</p>
         </div>
         <div className="flex justify-center w-full p-4">
-          <WorkspacesCard />
+          <WorkspacesCard modalState={showWorkspaceModal}/>
         </div>
         
       </div>

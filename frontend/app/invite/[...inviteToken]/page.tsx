@@ -16,7 +16,9 @@ const Login = ({ onLogin }: { onLogin: any}) => {
     const { control, handleSubmit, formState: { errors } } = useForm<FieldValues>()
     const { dispatch } = useAuthContext()
     const [loading, setLoading] = useState(false)
+
     const params = useParams()
+    const router = useRouter()
     const axiosInstance = useAxiosPrivate()
     const token = params.inviteToken
 
@@ -25,19 +27,24 @@ const Login = ({ onLogin }: { onLogin: any}) => {
         // console.log("Login Form Data:", data);
         try {
             setLoading(true)
-            console.log("DATA:", data)
+            // console.log("DATA:", data)
             const registrationData = {
                 ...data,
                 invitationToken: token[1],
                 workspace_id: token[0],
             }
-            const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/register-with-invitation`, registrationData)
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/login-with-invitation`, registrationData, {
+                withCredentials: true
+            })
             const resData = response?.data
 
             if(resData?.status === 'success'){
+                // localStorage.removeItem('userData')
                 const userdata = localStorage.setItem('userData', JSON.stringify(resData.data))
                 dispatch({type: 'LOGIN', payload: resData.data})
-                console.log("REGISTRATION DATA:", userdata)
+                console.log("LOGIN DATA:", userdata)
+                router.push(`/client/${token[0]}`)
+                // router.push('/get-started/landing')
             }
             // console.log("REGISTRATION DATA: ", resData)
         } catch (error) {
@@ -71,16 +78,11 @@ const InvitePage = () => {
     const {control, handleSubmit, formState:{errors}} = useForm<FieldValues>()
     const [showLogin, setShowLogin] = useState(false);
     const [loading, setLoading] = useState(false)
-    const axiosInstance = useAxiosPrivate()
     
     const router = useRouter()
     const params = useParams()
     
     const token = params.inviteToken
-
-    // console.log("TOKEN", token)
-    // console.log("Token", token[1])
-    // console.log("workspace", token[0])
 
     const handleFormSubmit = async(data: FieldValues) => {
         try {
@@ -113,8 +115,7 @@ const InvitePage = () => {
 
     const handleLoginComplete = () => {
         // Additional actions after successful login (if needed)
-        
-        router.push(`/client/${token[0]}`)
+        // router.push(`/client/${token[0]}`)
     };
     
     return (

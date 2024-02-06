@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation';
 const SignUp = () => {
     const {control, handleSubmit, formState:{errors}} = useForm<FieldValues>()
     const [loading, setLoading] = useState(false)
+    const [errorMsg, setErrorMsg] = useState('')
     const router = useRouter()
 
     const handleFormSubmit = async(data: FieldValues) => {
@@ -24,8 +25,9 @@ const SignUp = () => {
             }
 
             console.log("REGISTRATION DATA: ", resData)
-        } catch (error) {
+        } catch (error: any) {
             console.log(error)
+            setErrorMsg(error?.response?.data)
         } finally {
             setLoading(false)
         }
@@ -56,6 +58,7 @@ const SignUp = () => {
                     <CustomInput name='email' placeholder='Enter email' control={control} customStyles="py-3 focus:border-blue-500 focus:bg-[#f9fafc]" type='email' rules={{ required: 'Email is required' }} />
                     <CustomInput name='password' placeholder='Enter password' control={control} customStyles="py-3 focus:border-blue-500 focus:bg-[#f9fafc]" type='password' rules={{ required: 'Password is required' }} />
                     
+                    {errorMsg && <p className="pt-5 italic text-red-500">{errorMsg}</p>}
                     <button
                         onClick={handleSubmit(handleFormSubmit)}
                         className="mt-2 cursor-pointer flex rounded text-white bg-[#3f1b3f] justify-center items-center h-11 w-full"
