@@ -42,7 +42,7 @@ const Page = () => {
             }
         } catch (error: any) {
             console.error('Error occurred while fetching data:', error);
-            setError(error.response.data)
+            setError(error?.response?.data)
         } finally {
             setLoading(false)
         }
