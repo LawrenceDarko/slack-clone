@@ -7,6 +7,8 @@ import RoomNav from "@/app/components/navbars/RoomNav";
 import { useParams } from 'next/navigation';
 import { useAuthContext } from "@/app/context/AuthContext";
 import { axiosPrivate } from '@/app/hooks/axios';
+import { io } from "socket.io-client";
+import TextEditor from '@/app/components/TextEditor';
 
 const page = () => {
 
@@ -15,6 +17,9 @@ const page = () => {
     const [newMessage, setNewMessage] = useState("")
     const [friendInfo, setFriendInfo] = useState() as any
     const [workspaceInfo, setWorkspaceInfo] = useState<any>(null)
+
+    // Socket
+    const socket = useRef(io("ws://localhost:8000")) as any
 
     const params = useParams()
     const controller = new AbortController();
@@ -32,19 +37,11 @@ const page = () => {
             const roomData = response?.data
             // console.log("ROOM DATA:", roomData)
             if(roomData?.status === 'success' && user){
-                let friendId
-                if(roomData?.data?.members[0] === user?._id){
-                    friendId = roomData?.data?.members[1]
-                }
-                else{
-                    friendId = roomData?.data?.members[0]
-                }
-
-                // console.log("FRIEND ID:", friendId)
+                const friendId = roomData?.data?.members.find((member: any) => member !== user?.id);
                 // Make api call to fetch friend information
                 const response = await axiosPrivate.get(`${process.env.NEXT_PUBLIC_BACKEND_URL}/users/${friendId}`)
                 const responseData = response?.data
-                console.log('FRIEND DATA:', responseData)
+                // console.log('FRIEND DATA:', responseData)
                 if(responseData?.status === 'success'){
                     setFriendInfo(responseData?.data)
                 }
@@ -62,7 +59,7 @@ const page = () => {
             signal: controller.signal
         })
         const messagesData = response?.data
-        console.log(messagesData)
+        // console.log(messagesData)
         setMessages(messagesData)
         } catch (error) {
             console.log(error)
@@ -95,7 +92,8 @@ const page = () => {
             sender_id: user.id,
             direct_chat_id: directChatIdOrChannelId,
             message_body: newMessage,
-            username: user.username
+            username: user.username,
+            createdAt: new Date()
         };
     
         console.log(data);
@@ -118,7 +116,9 @@ const page = () => {
             const response = await axiosPrivate.post(endpoint, data);
             
             const messagesData = response?.data;
-            await setMessages((prev: any) => [...prev, messagesData]);
+            socket.current.emit("sendMessage", data);
+
+            // await setMessages((prev: any) => [...prev, messagesData]);
             setNewMessage('');
             console.log(messagesData);
         } catch (error) {
@@ -158,9 +158,37 @@ const page = () => {
         }
         
     }, [user])
-    
-    
 
+
+
+    useEffect(() => {
+        // Listen for received messages
+        socket.current.on("receiveMessage", (data: any) => {
+            // Update the local state to show the received message
+            setMessages((prev: any) => [...prev, data]);
+        });
+
+        // Clean up the socket connection when the component unmounts
+        return () => {
+            socket.current.disconnect();
+        };
+    }, []);
+    
+    useEffect(() => {
+        if (!user) return;
+    
+        socket.current.emit("addUser", user?.id);
+    
+        // Join the room or channel
+        socket.current.emit("joinRoom", directChatIdOrChannelId);
+    
+        socket.current.on("getUser", (updatedUsers: any) => {
+            console.log("ONLINE USERS:", updatedUsers);
+        });
+    }, [user, directChatIdOrChannelId]);
+    
+    
+    
     return (
         <div className='relative w-full h-screen'>
             <RoomNav user={friendInfo?.username} isChannel={directChatIdOrChannelId.startsWith('CH')} channelName={workspaceInfo?.data?.name}/>
@@ -182,24 +210,32 @@ const page = () => {
                     </div>
 
                     {messages && <section className='flex flex-col w-full h-full gap-3 p-3 cursor-pointer'>
-                        {messages?.map((message: any, i: any)=> (
-                        <div ref={i === messages.length - 1 ? lastMessageRef : null} key={i} className='flex items-start justify-start gap-2 p-2 hover:bg-gray-50'>
-                            <div className='w-12 h-12 rounded-md'>
-                                <BiSolidUserRectangle className="w-full h-full text-gray-200"/>
-                            </div>
-                            <div>
-                                <p className='font-bold'>{message?.username}</p>
-                                <p className='text-normal'>{message?.message_body}</p>
-                            </div>
-                        </div>))}
+                        {messages?.map((message: any, i: any) => {
+                                const createdAtDate = new Date(message?.createdAt);
+                                const options: any = { hour: '2-digit', minute: '2-digit' };
+                                const formattedTime = createdAtDate.toLocaleTimeString(undefined, options);
+
+                                return (
+                                    <div ref={i === messages.length - 1 ? lastMessageRef : null} key={i} className='flex items-start justify-start w-full gap-2 p-2 hover:bg-[#F8F8F8] dark:hover:bg-[#222529]'>
+                                        <div className='w-12 h-12 rounded-md flex-[0.04]'>
+                                            <BiSolidUserRectangle className="w-full h-full text-gray-900 dark:bg-[#350D36] dark:text-white"/>
+                                        </div>
+                                        <div className='pt-2 flex-[0.96]'>
+                                            <p className='font-bold leading-[1.4px]'>{message?.username} <span className='text-xs font-normal text-[#5F5F5F]'>{formattedTime}</span></p>
+                                            <p className='font-normal text-[15px] text-[#5F5F5F]'>{message?.message_body}</p>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            
                     </section>}
                 </section>
-                <section className="m-5 flex border-1 flex-col rounded-md active:border-black bottom-2 left-3 right-3 h-20  min-h-[50px] bg-white z-19">
+                <section className="m-5 flex border-1 flex-col active:border-black bottom-2 left-3 right-3 h-20  min-h-[50px] z-19">
                     {/* <TextEditor /> */}
-                    <form action="" className='flex w-full h-full p-2 border'>
-                        <input className='w-full h-full outline-none' value={newMessage} onChange={(e: any)=>setNewMessage(e.target.value)}/>
+                    <form action="" className='flex dark:border-[#35373B] dark:bg-[#222529] w-full h-full overflow-hidden border rounded-lg'>
+                        <input className='w-full h-full rounded-lg p-3 outline-none dark:bg-[#222529]' value={newMessage} onChange={(e: any)=>setNewMessage(e.target.value)}/>
                         <button type='submit' disabled={!newMessage}  onClick={sendMessage}>
-                            <IoMdSend disabled={!newMessage} className={`${!newMessage && 'bg-gray-400 cursor-not-allowed'} text-2xl text-green-800`}/>
+                            <IoMdSend className={`${!newMessage && 'cursor-not-allowed'} text-2xl text-green-800`}/>
                         </button>
                     </form>
                 </section>
