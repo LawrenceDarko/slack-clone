@@ -11,8 +11,8 @@ interface RoomNavProps {
 
 const RoomNav: React.FC<RoomNavProps> = ({user, isChannel, channelName}) => {
     return (
-        <div className='absolute top-[44px] z-10 w-full bg-white'>
-            <section className='flex items-center justify-between w-full p-3 border-b'>
+        <div className='absolute top-[44px] z-10 w-full bg-white dark:bg-[#1A1D21]'>
+            <section className='flex items-center justify-between w-full p-3 dark:border-b-[#35373B] border-b'>
                 <div className="flex items-center gap-1 cursor-pointer hover:bg-[#F6F6F6] rounded-md">
                     {isChannel ? "#" : <BiSolidUserRectangle className='text-4xl text-[#007A5A]'/>}
                     {isChannel ? 
@@ -24,7 +24,7 @@ const RoomNav: React.FC<RoomNavProps> = ({user, isChannel, channelName}) => {
                     <VscNewFile />
                 </div>
             </section>
-            <section className="px-4 py-2 border-b bg-white text-[#949394] flex gap-3 text-sm">
+            <section className="px-4 py-2 border-b dark:border-b-[#35373B] bg-white dark:bg-[#1A1D21] text-[#949394] flex gap-3 text-sm">
                 <AiOutlinePlus />
                 <p>Add bookmark</p>
             </section>
