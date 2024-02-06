@@ -15,7 +15,7 @@ const createChannel = async (req: Request, res: Response) => {
         if (access_type === 'public') {
             // Fetch the members from the workspace
             const workspaceMembers = await UserWorkspace.find({ workspace: workspace_id }).populate('user', 'id');
-            members = workspaceMembers.map((userWorkspace: any) => userWorkspace.user.id);
+            members = workspaceMembers.map((userWorkspace: any) => userWorkspace?.user?.id);
             // console.log("GROUP MEMBERS", members)
         }
         // Create a new channel
@@ -39,7 +39,7 @@ const createChannel = async (req: Request, res: Response) => {
 
 
 const getWorkspaceChannels = async(req: Request, res: Response) => { 
-    const {id} = req.params;
+    const {id} = req.params || '';
     const allWorkspaceChannels = await Channel.find({workspace_id: id})
     try {
         res.status(200).json({status: 'success', data: allWorkspaceChannels})
@@ -61,7 +61,8 @@ const getASingleChannelById = async(req: Request, res: Response) => {
 }
 
 const createChannelMessage = async(req: Request, res: Response) => { 
-    const newChannelMessage = new ChannelMessage(req.body)
+    const { sender_id, direct_chat_id, message_body, username } = req.body;
+    const newChannelMessage = new ChannelMessage({sender_id, direct_chat_id, message_body, username})
 
     try {
         const savedChannelMessage = await newChannelMessage.save();
