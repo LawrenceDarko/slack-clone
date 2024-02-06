@@ -51,11 +51,13 @@ const registerUser = async(req: Request, res: Response) => {
         const access_token = generateAccessToken(savedUser._id)
         // const refresh_token = generateRefreshToken(savedUser._id)
         res.status(201).json({
-            id: savedUser._id,
-            username: savedUser.username,
-            email: savedUser.email,
-            accessToken: access_token,
-            // refreshToken: refresh_token
+            status: 'success',
+            data: {
+                id: savedUser._id,
+                username: savedUser.username,
+                email: savedUser.email,
+                accessToken: access_token,
+            }
         });
     } catch (error) {
         res.status(400).json(error);
@@ -105,11 +107,11 @@ const registerUserWithInvitation = async (req: Request, res: Response) => {
         }
 
         // Add the user to the workspace
-        await UserWorkspace.create({ user: savedUser._id, workspace: workspace_id });
+        // await UserWorkspace.create({ user: savedUser._id, workspace: workspace_id });
 
         // Mark the invitation as accepted
-        invitation.accepted = true;
-        await invitation.save();
+        // invitation.accepted = true;
+        // await invitation.save();
 
         // Generate access token
         const access_token = generateAccessToken(savedUser._id);
@@ -153,8 +155,8 @@ const loginUser = async (req: Request, res: Response) => {
 
             // console.log(refresh_token)
             res.cookie("token", access_token, {
-                httpOnly: true,
-                maxAge: 3 * 60 * 1000
+                httpOnly: false,
+                maxAge: 24 * 60 * 60 * 1000
             })
 
             return res.status(200).json({
@@ -198,11 +200,14 @@ const loginUserWithInvitation = async (req: Request, res: Response) => {
 
         if (!invitation) {
             return res.status(403).json('Invalid or expired invitation token.');
+        } else {
+            // Mark the invitation as accepted
+            console.log("INVITATION", invitation)
+            invitation.accepted = true;
+            await invitation.save();
         }
 
-        // Mark the invitation as accepted
-        invitation.accepted = true;
-        await invitation.save();
+
 
         // Check if the entered password matches the stored hashed password
         if (user.password && (await bcrypt.compare(password, user.password))) {
@@ -302,6 +307,11 @@ const sendEmailInvitation = async(req: Request, res: Response) => {
     }
 }
 
+const logoutUser = async(req: Request, res: Response) => {
+    res.clearCookie('token')
+    res.status(200).json({status: "success", message: "Logged out successfully"})
+}
+
 export {
         registerUser, 
         registerUserWithInvitation, 
@@ -309,5 +319,6 @@ export {
         loginUser, 
         getAUser, 
         sendEmailInvitation,
-        loginUserWithInvitation
+        loginUserWithInvitation,
+        logoutUser
     }
