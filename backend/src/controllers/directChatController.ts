@@ -56,7 +56,8 @@ const getADirectChatObjUsingRoomId = async(req: Request, res: Response) => {
 
 // Creates a direct chat message between 2 users. it takes senderId, direct_chat_id and message body
 const createDirectMessage = async(req: Request, res: Response) => { 
-    const newDirectMessage = new DirectMessage(req.body)
+    const { sender_id, direct_chat_id, message_body, username } = req.body;
+    const newDirectMessage = new DirectMessage({sender_id, direct_chat_id, message_body, username})
 
     try {
         const savedDirectMessage = await newDirectMessage.save();
